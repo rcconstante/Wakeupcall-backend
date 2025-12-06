@@ -1300,6 +1300,20 @@ def submit_survey():
                 'success': True,
                 'message': 'Survey processed successfully (Guest Mode)',
                 'survey_id': -1,  # No real survey ID for guests
+                'demographics': {
+                    'age': age,
+                    'sex': demo.get('sex', 'male'),
+                    'height_cm': height_cm,
+                    'weight_kg': weight_kg,
+                    'neck_circumference_cm': neck_cm
+                },
+                'medical_history': {
+                    'hypertension': hypertension == 1,
+                    'diabetes': diabetes == 1,
+                    'depression': depression == 1,
+                    'smokes': smokes == 1,
+                    'alcohol': alcohol == 1
+                },
                 'scores': {
                     'ess': {
                         'score': ess_score,
@@ -1429,6 +1443,20 @@ def submit_survey():
             'success': True,
             'message': 'Survey submitted successfully',
             'survey_id': survey_id,
+            'demographics': {
+                'age': age,
+                'sex': demo.get('sex', 'male'),
+                'height_cm': height_cm,
+                'weight_kg': weight_kg,
+                'neck_circumference_cm': neck_cm
+            },
+            'medical_history': {
+                'hypertension': hypertension == 1,
+                'diabetes': diabetes == 1,
+                'depression': depression == 1,
+                'smokes': smokes == 1,
+                'alcohol': alcohol == 1
+            },
             'scores': {
                 'ess': {
                     'score': ess_score,
