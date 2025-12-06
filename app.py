@@ -2366,7 +2366,7 @@ def generate_pdf_report():
         
         # Generate comprehensive recommendations using the recommendation engine
         sex_binary = 1 if sex == 'Male' else 0
-        actual_physical_activity = physical_activity_time if not is_guest else data.get('physical_activity_time', None)
+        actual_physical_activity = data.get('physical_activity_time', None) if is_guest else physical_activity_time
         recommendation = generate_ml_recommendation(
             osa_probability, risk_level, age, bmi, neck_cm,
             hypertension, diabetes, smokes, alcohol,
@@ -2423,7 +2423,7 @@ def generate_pdf_report():
             'lifestyle': {
                 'smoking': smokes,
                 'alcohol': alcohol,
-                'physical_activity_time': physical_activity_time if not is_guest else data.get('physical_activity_time', 'Unknown')
+                'physical_activity_time': data.get('physical_activity_time', 'Unknown') if is_guest else physical_activity_time
             },
             'medical_history': {
                 'hypertension': hypertension,
