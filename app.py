@@ -2169,7 +2169,13 @@ def generate_pdf_report():
                 stopbang_observed_apnea = False
                 stopbang_pressure = bool(hypertension)
             
+            # Physical activity time (use default if not available)
             physical_activity_time = survey[32] if has_extended_columns and len(survey) > 32 and survey[32] is not None else 'Unknown'
+        
+        # Initialize ESS variables with defaults if not already set (for non-authenticated users)
+        if 'ess_sitting_reading' not in locals():
+            ess_sitting_reading = ess_watching_tv = ess_public_sitting = ess_passenger_car = 0
+            ess_lying_down_afternoon = ess_talking = ess_after_lunch = ess_traffic_stop = 0
         
         # Use actual ESS individual scores if available, otherwise calculate from total
         if ess_sitting_reading or ess_watching_tv or ess_public_sitting:
