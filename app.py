@@ -2381,10 +2381,10 @@ def generate_pdf_report():
                 'name': user_name,
                 'age': age,
                 'sex': sex,
-                'height': f'{height_cm} cm',
-                'weight': f'{weight_kg} kg',
+                'height': f'{height_cm:.2f} cm',
+                'weight': f'{weight_kg:.2f} kg',
                 'bmi': bmi,
-                'neck_circumference': f'{neck_cm} cm'
+                'neck_circumference': f'{neck_cm:.2f} cm'
             },
             'assessment': {
                 'risk_level': risk_level,
