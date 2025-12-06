@@ -336,7 +336,8 @@ else:
     print("✅ Scaler loaded successfully!")
 
 def generate_ml_recommendation(osa_probability, risk_level, age, bmi, neck_cm, hypertension, diabetes, smokes, alcohol, ess_score, berlin_score, stopbang_score, sleep_duration=7.0, daily_steps=5000, physical_activity_time=None):
-    """Generate personalized recommendations using comprehensive recommendation engine"""
+    """Generate personalized recommendations using comprehensive recommendation engine.
+    Limits recommendations based on risk level to avoid overwhelming users."""
     
     # Use the new RecommendationEngine
     sex = 1  # Default to male (conservative for OSA risk)
@@ -358,8 +359,21 @@ def generate_ml_recommendation(osa_probability, risk_level, age, bmi, neck_cm, h
         physical_activity_time=physical_activity_time
     )
     
+    # Sort by priority (descending) and limit based on risk level
+    recommendations.sort(key=lambda r: r.priority, reverse=True)
+    
+    # Limit recommendations to avoid overwhelming users
+    if "High" in risk_level:
+        max_recommendations = 8  # High risk: show top 8 most critical
+    elif "Intermediate" in risk_level:
+        max_recommendations = 5  # Intermediate risk: show top 5
+    else:
+        max_recommendations = 4  # Low risk: show top 4
+    
+    limited_recommendations = recommendations[:max_recommendations]
+    
     # Format for API response (pipe-separated)
-    return RecommendationEngine.format_for_api(recommendations)
+    return RecommendationEngine.format_for_api(limited_recommendations)
 
 def calculate_top_risk_factors(input_features, osa_probability):
     """Calculate top risk factors based on actual survey data and thresholds"""

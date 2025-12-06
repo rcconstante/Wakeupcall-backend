@@ -265,11 +265,22 @@ class WakeUpCallPDFGenerator:
         story.append(Paragraph("STOP-BANG Assessment", self.styles['SectionHeader']))
         
         stop_bang = data.get('stop_bang', {})
-        stop_bang_score = stop_bang.get('score', 0)
         
-        if stop_bang_score >= 5:
+        # Recalculate actual score from boolean values to ensure accuracy
+        actual_score = sum([
+            1 if stop_bang.get('snoring') else 0,
+            1 if stop_bang.get('tiredness') else 0,
+            1 if stop_bang.get('observed_apnea') else 0,
+            1 if stop_bang.get('high_blood_pressure') else 0,
+            1 if stop_bang.get('bmi_over_35') else 0,
+            1 if stop_bang.get('age_over_50') else 0,
+            1 if stop_bang.get('neck_circumference_large') else 0,
+            1 if stop_bang.get('gender_male') else 0
+        ])
+        
+        if actual_score >= 5:
             risk_text = "High Risk"
-        elif stop_bang_score >= 3:
+        elif actual_score >= 3:
             risk_text = "Intermediate Risk"
         else:
             risk_text = "Low Risk"
@@ -283,7 +294,7 @@ class WakeUpCallPDFGenerator:
             ['Age > 50', 'Yes' if stop_bang.get('age_over_50') else 'No'],
             ['Neck ≥ 40 cm', 'Yes' if stop_bang.get('neck_circumference_large') else 'No'],
             ['Gender Male', 'Yes' if stop_bang.get('gender_male') else 'No'],
-            ['Total Score', f"{stop_bang_score}/8 ({risk_text})"]
+            ['Total Score', f"{actual_score}/8 ({risk_text})"]
         ]
         
         stop_bang_table = Table(stop_bang_data, colWidths=[2.5*inch, 3.5*inch])
@@ -305,11 +316,22 @@ class WakeUpCallPDFGenerator:
         story.append(Paragraph("Epworth Sleepiness Scale (ESS)", self.styles['SectionHeader']))
         
         ess = data.get('epworth_sleepiness_scale', {})
-        ess_total = ess.get('total_score', 0)
         
-        if ess_total > 10:
+        # Recalculate actual ESS total from individual scores to ensure accuracy
+        actual_ess_total = sum([
+            ess.get('sitting_reading', 0),
+            ess.get('watching_tv', 0),
+            ess.get('public_sitting', 0),
+            ess.get('passenger_car', 0),
+            ess.get('lying_down_pm', 0),
+            ess.get('talking', 0),
+            ess.get('after_lunch', 0),
+            ess.get('traffic_stop', 0)
+        ])
+        
+        if actual_ess_total > 10:
             ess_interpretation = "Excessive Daytime Sleepiness"
-        elif ess_total > 6:
+        elif actual_ess_total > 6:
             ess_interpretation = "Higher Normal Daytime Sleepiness"
         else:
             ess_interpretation = "Normal Daytime Sleepiness"
@@ -323,7 +345,7 @@ class WakeUpCallPDFGenerator:
             ['Talking', str(ess.get('talking', 0))],
             ['After lunch', str(ess.get('after_lunch', 0))],
             ['Traffic stop', str(ess.get('traffic_stop', 0))],
-            ['Total ESS Score', f"{ess_total}/24 ({ess_interpretation})"]
+            ['Total ESS Score', f"{actual_ess_total}/24 ({ess_interpretation})"]
         ]
         
         ess_table = Table(ess_data, colWidths=[2.5*inch, 3.5*inch])
