@@ -103,10 +103,95 @@ def init_db():
             sleep_duration_hours REAL,
             weekly_steps_json TEXT,
             weekly_sleep_json TEXT,
+            -- Additional survey fields
+            snoring_level TEXT,
+            snoring_frequency TEXT,
+            snoring_bothers_others INTEGER,
+            tired_during_day TEXT,
+            tired_after_sleep TEXT,
+            feels_sleepy_daytime INTEGER,
+            nodded_off_driving INTEGER,
+            physical_activity_time TEXT,
+            -- ESS individual scores
+            ess_sitting_reading INTEGER,
+            ess_watching_tv INTEGER,
+            ess_public_sitting INTEGER,
+            ess_passenger_car INTEGER,
+            ess_lying_down_afternoon INTEGER,
+            ess_talking INTEGER,
+            ess_after_lunch INTEGER,
+            ess_traffic_stop INTEGER,
+            -- STOP-BANG individual responses
+            stopbang_snoring INTEGER,
+            stopbang_tired INTEGER,
+            stopbang_observed_apnea INTEGER,
+            stopbang_pressure INTEGER,
             completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
     ''')
+    
+    # Add missing columns if table already exists (migration for existing deployments)
+    try:
+        cursor.execute('ALTER TABLE user_surveys ADD COLUMN snoring_level TEXT')
+    except: pass
+    try:
+        cursor.execute('ALTER TABLE user_surveys ADD COLUMN snoring_frequency TEXT')
+    except: pass
+    try:
+        cursor.execute('ALTER TABLE user_surveys ADD COLUMN snoring_bothers_others INTEGER')
+    except: pass
+    try:
+        cursor.execute('ALTER TABLE user_surveys ADD COLUMN tired_during_day TEXT')
+    except: pass
+    try:
+        cursor.execute('ALTER TABLE user_surveys ADD COLUMN tired_after_sleep TEXT')
+    except: pass
+    try:
+        cursor.execute('ALTER TABLE user_surveys ADD COLUMN feels_sleepy_daytime INTEGER')
+    except: pass
+    try:
+        cursor.execute('ALTER TABLE user_surveys ADD COLUMN nodded_off_driving INTEGER')
+    except: pass
+    try:
+        cursor.execute('ALTER TABLE user_surveys ADD COLUMN physical_activity_time TEXT')
+    except: pass
+    try:
+        cursor.execute('ALTER TABLE user_surveys ADD COLUMN ess_sitting_reading INTEGER')
+    except: pass
+    try:
+        cursor.execute('ALTER TABLE user_surveys ADD COLUMN ess_watching_tv INTEGER')
+    except: pass
+    try:
+        cursor.execute('ALTER TABLE user_surveys ADD COLUMN ess_public_sitting INTEGER')
+    except: pass
+    try:
+        cursor.execute('ALTER TABLE user_surveys ADD COLUMN ess_passenger_car INTEGER')
+    except: pass
+    try:
+        cursor.execute('ALTER TABLE user_surveys ADD COLUMN ess_lying_down_afternoon INTEGER')
+    except: pass
+    try:
+        cursor.execute('ALTER TABLE user_surveys ADD COLUMN ess_talking INTEGER')
+    except: pass
+    try:
+        cursor.execute('ALTER TABLE user_surveys ADD COLUMN ess_after_lunch INTEGER')
+    except: pass
+    try:
+        cursor.execute('ALTER TABLE user_surveys ADD COLUMN ess_traffic_stop INTEGER')
+    except: pass
+    try:
+        cursor.execute('ALTER TABLE user_surveys ADD COLUMN stopbang_snoring INTEGER')
+    except: pass
+    try:
+        cursor.execute('ALTER TABLE user_surveys ADD COLUMN stopbang_tired INTEGER')
+    except: pass
+    try:
+        cursor.execute('ALTER TABLE user_surveys ADD COLUMN stopbang_observed_apnea INTEGER')
+    except: pass
+    try:
+        cursor.execute('ALTER TABLE user_surveys ADD COLUMN stopbang_pressure INTEGER')
+    except: pass
     
     conn.commit()
     conn.close()
@@ -250,7 +335,7 @@ if scaler is None:
 else:
     print("✅ Scaler loaded successfully!")
 
-def generate_ml_recommendation(osa_probability, risk_level, age, bmi, neck_cm, hypertension, diabetes, smokes, alcohol, ess_score, berlin_score, stopbang_score, sleep_duration=7.0, daily_steps=5000):
+def generate_ml_recommendation(osa_probability, risk_level, age, bmi, neck_cm, hypertension, diabetes, smokes, alcohol, ess_score, berlin_score, stopbang_score, sleep_duration=7.0, daily_steps=5000, physical_activity_time=None):
     """Generate personalized recommendations using comprehensive recommendation engine"""
     
     # Use the new RecommendationEngine
@@ -269,7 +354,8 @@ def generate_ml_recommendation(osa_probability, risk_level, age, bmi, neck_cm, h
         stopbang_score=stopbang_score,
         sleep_duration=sleep_duration,
         daily_steps=daily_steps,
-        risk_level=risk_level
+        risk_level=risk_level,
+        physical_activity_time=physical_activity_time
     )
     
     # Format for API response (pipe-separated)
@@ -1374,6 +1460,7 @@ def submit_survey():
                         ess_sitting_reading = ?, ess_watching_tv = ?, ess_public_sitting = ?,
                         ess_passenger_car = ?, ess_lying_down_afternoon = ?, ess_talking = ?,
                         ess_after_lunch = ?, ess_traffic_stop = ?,
+                        stopbang_snoring = ?, stopbang_tired = ?, stopbang_observed_apnea = ?, stopbang_pressure = ?,
                         completed_at = CURRENT_TIMESTAMP
                     WHERE user_id = ?
                 ''', (age, demo.get('sex', 'male'), height_cm, weight_kg, neck_cm, bmi,
@@ -1386,6 +1473,7 @@ def submit_survey():
                       ess_sitting_reading, ess_watching_tv, ess_public_sitting,
                       ess_passenger_car, ess_lying_down_afternoon, ess_talking,
                       ess_after_lunch, ess_traffic_stop,
+                      1 if snoring else 0, 1 if tired else 0, 1 if observed else 0, 1 if pressure else 0,
                       user_id))
                 
                 rows_affected = cursor.rowcount
@@ -1413,9 +1501,10 @@ def submit_survey():
                      nodded_off_driving, physical_activity_time,
                      ess_sitting_reading, ess_watching_tv, ess_public_sitting,
                      ess_passenger_car, ess_lying_down_afternoon, ess_talking,
-                     ess_after_lunch, ess_traffic_stop)
+                     ess_after_lunch, ess_traffic_stop,
+                     stopbang_snoring, stopbang_tired, stopbang_observed_apnea, stopbang_pressure)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (user_id, age, demo.get('sex', 'male'), height_cm, weight_kg, neck_cm, bmi,
                       hypertension, diabetes, depression, smokes, alcohol,
                       ess_score, berlin_score_binary, stopbang_score, certainty, risk_level,
@@ -1425,7 +1514,8 @@ def submit_survey():
                       nodded_off_driving, physical_activity_time,
                       ess_sitting_reading, ess_watching_tv, ess_public_sitting,
                       ess_passenger_car, ess_lying_down_afternoon, ess_talking,
-                      ess_after_lunch, ess_traffic_stop))
+                      ess_after_lunch, ess_traffic_stop,
+                      1 if snoring else 0, 1 if tired else 0, 1 if observed else 0, 1 if pressure else 0))
                 survey_id = cursor.lastrowid
                 print(f"✅ Created new survey (ID: {survey_id}) for user {user_id}")
                 print(f"   Certainty: {certainty:.3f} ({certainty*100:.1f}%), Risk: {risk_level}")
@@ -2007,7 +2097,11 @@ def generate_pdf_report():
                        hypertension, diabetes, smokes, alcohol,
                        ess_score, berlin_score, stopbang_score, osa_probability, risk_level,
                        daily_steps, average_daily_steps, sleep_duration_hours,
-                       weekly_steps_json, weekly_sleep_json
+                       weekly_steps_json, weekly_sleep_json,
+                       ess_sitting_reading, ess_watching_tv, ess_public_sitting, ess_passenger_car,
+                       ess_lying_down_afternoon, ess_talking, ess_after_lunch, ess_traffic_stop,
+                       stopbang_snoring, stopbang_tired, stopbang_observed_apnea, stopbang_pressure,
+                       physical_activity_time
                 FROM user_surveys
                 WHERE user_id = ?
                 ORDER BY completed_at DESC
@@ -2027,10 +2121,32 @@ def generate_pdf_report():
             osa_probability, risk_level = survey[13:15]
             daily_steps, average_daily_steps, sleep_duration_hours = survey[15:18]
             weekly_steps_json, weekly_sleep_json = survey[18:20]
+            # ESS individual scores
+            ess_sitting_reading = survey[20] if len(survey) > 20 and survey[20] is not None else 0
+            ess_watching_tv = survey[21] if len(survey) > 21 and survey[21] is not None else 0
+            ess_public_sitting = survey[22] if len(survey) > 22 and survey[22] is not None else 0
+            ess_passenger_car = survey[23] if len(survey) > 23 and survey[23] is not None else 0
+            ess_lying_down_afternoon = survey[24] if len(survey) > 24 and survey[24] is not None else 0
+            ess_talking = survey[25] if len(survey) > 25 and survey[25] is not None else 0
+            ess_after_lunch = survey[26] if len(survey) > 26 and survey[26] is not None else 0
+            ess_traffic_stop = survey[27] if len(survey) > 27 and survey[27] is not None else 0
+            # STOP-BANG individual responses
+            stopbang_snoring = bool(survey[28]) if len(survey) > 28 and survey[28] is not None else False
+            stopbang_tired = bool(survey[29]) if len(survey) > 29 and survey[29] is not None else False
+            stopbang_observed_apnea = bool(survey[30]) if len(survey) > 30 and survey[30] is not None else False
+            stopbang_pressure = bool(survey[31]) if len(survey) > 31 and survey[31] is not None else False
+            physical_activity_time = survey[32] if len(survey) > 32 and survey[32] is not None else 'Unknown'
         
-        # Calculate ESS individual scores (divide total by 8 for average, then distribute)
-        avg_ess = ess_score / 8
-        ess_responses = [int(avg_ess)] * 8  # Simplified: use average for each question
+        # Use actual ESS individual scores if available, otherwise calculate from total
+        if ess_sitting_reading or ess_watching_tv or ess_public_sitting:
+            ess_responses = [
+                ess_sitting_reading, ess_watching_tv, ess_public_sitting, ess_passenger_car,
+                ess_lying_down_afternoon, ess_talking, ess_after_lunch, ess_traffic_stop
+            ]
+        else:
+            # Fallback: distribute total score evenly
+            avg_ess = ess_score / 8 if ess_score else 0
+            ess_responses = [int(avg_ess)] * 8
         
         # Parse Google Fit JSON data
         import json
@@ -2163,10 +2279,18 @@ def generate_pdf_report():
         sleep_chart_buffer = generate_sleep_chart(weekly_sleep_data) if weekly_sleep_data else None
         shap_chart_buffer = generate_shap_chart()
         
-        # Calculate STOP-BANG components
-        snoring = stopbang_score >= 1  # Simplified assumption
-        tiredness = ess_score >= 11
-        observed_apnea = False  # Not directly available
+        # Use actual STOP-BANG responses from survey (not estimates)
+        # For guest users, these come from request data; for registered users, from database
+        if is_guest:
+            snoring = data.get('stopbang_snoring', False)
+            tiredness = data.get('stopbang_tired', False) 
+            observed_apnea = data.get('stopbang_observed_apnea', False)
+        else:
+            snoring = stopbang_snoring
+            tiredness = stopbang_tired
+            observed_apnea = stopbang_observed_apnea
+        
+        # Calculate BANG components from demographics (these are always calculated)
         bmi_over_35 = bmi > 35
         age_over_50 = age > 50
         neck_large = neck_cm >= 40 if sex == 'Male' else neck_cm >= 35
@@ -2174,11 +2298,13 @@ def generate_pdf_report():
         
         # Generate comprehensive recommendations using the recommendation engine
         sex_binary = 1 if sex == 'Male' else 0
+        actual_physical_activity = physical_activity_time if not is_guest else data.get('physical_activity_time', None)
         recommendation = generate_ml_recommendation(
             osa_probability, risk_level, age, bmi, neck_cm,
             hypertension, diabetes, smokes, alcohol,
             ess_score, berlin_score, stopbang_score,
-            sleep_duration_hours, daily_steps
+            sleep_duration_hours, daily_steps,
+            physical_activity_time=actual_physical_activity
         )
         
         # Build data dictionary for PDF generator
@@ -2228,7 +2354,8 @@ def generate_pdf_report():
             },
             'lifestyle': {
                 'smoking': smokes,
-                'alcohol': alcohol
+                'alcohol': alcohol,
+                'physical_activity_time': physical_activity_time if not is_guest else data.get('physical_activity_time', 'Unknown')
             },
             'medical_history': {
                 'hypertension': hypertension,

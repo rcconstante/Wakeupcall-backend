@@ -348,9 +348,15 @@ class WakeUpCallPDFGenerator:
         lifestyle = data.get('lifestyle', {})
         medical = data.get('medical_history', {})
         
+        # Get physical activity time with proper formatting
+        physical_activity = lifestyle.get('physical_activity_time', 'Not specified')
+        if physical_activity in [None, '', 'Unknown']:
+            physical_activity = 'Not specified'
+        
         lifestyle_data = [
             ['Smoking', 'Yes' if lifestyle.get('smoking') else 'No'],
             ['Alcohol Intake', 'Yes' if lifestyle.get('alcohol') else 'No'],
+            ['Physical Activity', physical_activity],
             ['Hypertension', 'Yes' if medical.get('hypertension') else 'No'],
             ['Diabetes', 'Yes' if medical.get('diabetes') else 'No']
         ]

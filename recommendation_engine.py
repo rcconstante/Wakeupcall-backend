@@ -41,14 +41,18 @@ class RecommendationEngine:
         stopbang_score: int,
         sleep_duration: float,
         daily_steps: int = 5000,
-        risk_level: str = "Unknown"
+        risk_level: str = "Unknown",
+        physical_activity_time: str = None
     ) -> List[Recommendation]:
         """Generate all applicable recommendations based on user data."""
         
         recommendations = []
         
-        # Calculate activity metrics
-        physical_activity_minutes = RecommendationEngine._calculate_activity_minutes(daily_steps)
+        # Calculate activity minutes from survey response if available, otherwise from steps
+        physical_activity_minutes = RecommendationEngine._parse_activity_time(physical_activity_time)
+        if physical_activity_minutes is None:
+            physical_activity_minutes = RecommendationEngine._calculate_activity_minutes(daily_steps)
+        
         activity_type = RecommendationEngine._determine_activity_type(physical_activity_minutes)
         activity_time = "morning"  # Default
         
@@ -398,6 +402,51 @@ class RecommendationEngine:
         """Calculate physical activity minutes from daily steps."""
         # Rough estimate: 100 steps ≈ 1 minute of activity
         return min(max(daily_steps // 100, 0), 300)
+    
+    @staticmethod
+    def _parse_activity_time(activity_time_str: str) -> int:
+        """Parse physical activity time from survey response string."""
+        if not activity_time_str or activity_time_str in ['Unknown', '', None]:
+            return None
+        
+        activity_time_str = activity_time_str.lower().strip()
+        
+        # Map common responses to minutes
+        activity_map = {
+            'less than 30 minutes': 20,
+            'less than 30 min': 20,
+            '< 30 minutes': 20,
+            '<30 min': 20,
+            '30-45 minutes': 37,
+            '30-45 min': 37,
+            '30 to 45 minutes': 37,
+            '45 minutes': 45,
+            '45 min': 45,
+            '45-60 minutes': 52,
+            '45-60 min': 52,
+            '45 to 60 minutes': 52,
+            '1 hour': 60,
+            '60 minutes': 60,
+            'more than 1 hour': 75,
+            'more than 60 minutes': 75,
+            '> 1 hour': 75,
+            '>1 hour': 75,
+            'none': 0,
+            'no exercise': 0,
+            'i don\'t exercise': 0,
+        }
+        
+        for key, minutes in activity_map.items():
+            if key in activity_time_str:
+                return minutes
+        
+        # Try to extract numeric value
+        import re
+        numbers = re.findall(r'\d+', activity_time_str)
+        if numbers:
+            return int(numbers[0])
+        
+        return None
     
     @staticmethod
     def _determine_activity_type(minutes: int) -> str:
