@@ -2092,27 +2092,47 @@ def generate_pdf_report():
             # Get latest survey data from database for registered users
             conn = get_db()
             cursor = conn.cursor()
-            cursor.execute('''
-                SELECT age, sex, height_cm, weight_kg, neck_circumference_cm, bmi,
-                       hypertension, diabetes, smokes, alcohol,
-                       ess_score, berlin_score, stopbang_score, osa_probability, risk_level,
-                       daily_steps, average_daily_steps, sleep_duration_hours,
-                       weekly_steps_json, weekly_sleep_json,
-                       ess_sitting_reading, ess_watching_tv, ess_public_sitting, ess_passenger_car,
-                       ess_lying_down_afternoon, ess_talking, ess_after_lunch, ess_traffic_stop,
-                       stopbang_snoring, stopbang_tired, stopbang_observed_apnea, stopbang_pressure,
-                       physical_activity_time
-                FROM user_surveys
-                WHERE user_id = ?
-                ORDER BY completed_at DESC
-                LIMIT 1
-            ''', (user_id,))
             
-            survey = cursor.fetchone()
+            # First, try to get all columns including new ones
+            try:
+                cursor.execute('''
+                    SELECT age, sex, height_cm, weight_kg, neck_circumference_cm, bmi,
+                           hypertension, diabetes, smokes, alcohol,
+                           ess_score, berlin_score, stopbang_score, osa_probability, risk_level,
+                           daily_steps, average_daily_steps, sleep_duration_hours,
+                           weekly_steps_json, weekly_sleep_json,
+                           ess_sitting_reading, ess_watching_tv, ess_public_sitting, ess_passenger_car,
+                           ess_lying_down_afternoon, ess_talking, ess_after_lunch, ess_traffic_stop,
+                           stopbang_snoring, stopbang_tired, stopbang_observed_apnea, stopbang_pressure,
+                           physical_activity_time
+                    FROM user_surveys
+                    WHERE user_id = ?
+                    ORDER BY completed_at DESC
+                    LIMIT 1
+                ''', (user_id,))
+                survey = cursor.fetchone()
+                has_extended_columns = True
+            except Exception as col_error:
+                print(f"⚠️ Extended columns not available, using basic query: {col_error}")
+                # Fallback to basic columns if new ones don't exist
+                cursor.execute('''
+                    SELECT age, sex, height_cm, weight_kg, neck_circumference_cm, bmi,
+                           hypertension, diabetes, smokes, alcohol,
+                           ess_score, berlin_score, stopbang_score, osa_probability, risk_level,
+                           daily_steps, average_daily_steps, sleep_duration_hours,
+                           weekly_steps_json, weekly_sleep_json
+                    FROM user_surveys
+                    WHERE user_id = ?
+                    ORDER BY completed_at DESC
+                    LIMIT 1
+                ''', (user_id,))
+                survey = cursor.fetchone()
+                has_extended_columns = False
+            
             conn.close()
             
             if not survey:
-                return jsonify({'error': 'No survey data found', 'success': False}), 404
+                return jsonify({'error': 'No survey data found. Please complete the survey first.', 'success': False}), 404
             
             # Extract data
             age, sex, height_cm, weight_kg, neck_cm, bmi = survey[0:6]
@@ -2120,22 +2140,36 @@ def generate_pdf_report():
             ess_score, berlin_score, stopbang_score = survey[10:13]
             osa_probability, risk_level = survey[13:15]
             daily_steps, average_daily_steps, sleep_duration_hours = survey[15:18]
-            weekly_steps_json, weekly_sleep_json = survey[18:20]
-            # ESS individual scores
-            ess_sitting_reading = survey[20] if len(survey) > 20 and survey[20] is not None else 0
-            ess_watching_tv = survey[21] if len(survey) > 21 and survey[21] is not None else 0
-            ess_public_sitting = survey[22] if len(survey) > 22 and survey[22] is not None else 0
-            ess_passenger_car = survey[23] if len(survey) > 23 and survey[23] is not None else 0
-            ess_lying_down_afternoon = survey[24] if len(survey) > 24 and survey[24] is not None else 0
-            ess_talking = survey[25] if len(survey) > 25 and survey[25] is not None else 0
-            ess_after_lunch = survey[26] if len(survey) > 26 and survey[26] is not None else 0
-            ess_traffic_stop = survey[27] if len(survey) > 27 and survey[27] is not None else 0
-            # STOP-BANG individual responses
-            stopbang_snoring = bool(survey[28]) if len(survey) > 28 and survey[28] is not None else False
-            stopbang_tired = bool(survey[29]) if len(survey) > 29 and survey[29] is not None else False
-            stopbang_observed_apnea = bool(survey[30]) if len(survey) > 30 and survey[30] is not None else False
-            stopbang_pressure = bool(survey[31]) if len(survey) > 31 and survey[31] is not None else False
-            physical_activity_time = survey[32] if len(survey) > 32 and survey[32] is not None else 'Unknown'
+            weekly_steps_json, weekly_sleep_json = survey[18:20] if len(survey) > 19 else ('{}', '{}')
+            
+            # ESS individual scores (use defaults if not available)
+            if has_extended_columns and len(survey) > 27:
+                ess_sitting_reading = survey[20] if survey[20] is not None else 0
+                ess_watching_tv = survey[21] if survey[21] is not None else 0
+                ess_public_sitting = survey[22] if survey[22] is not None else 0
+                ess_passenger_car = survey[23] if survey[23] is not None else 0
+                ess_lying_down_afternoon = survey[24] if survey[24] is not None else 0
+                ess_talking = survey[25] if survey[25] is not None else 0
+                ess_after_lunch = survey[26] if survey[26] is not None else 0
+                ess_traffic_stop = survey[27] if survey[27] is not None else 0
+            else:
+                ess_sitting_reading = ess_watching_tv = ess_public_sitting = ess_passenger_car = 0
+                ess_lying_down_afternoon = ess_talking = ess_after_lunch = ess_traffic_stop = 0
+            
+            # STOP-BANG individual responses (use defaults if not available)
+            if has_extended_columns and len(survey) > 31:
+                stopbang_snoring = bool(survey[28]) if survey[28] is not None else False
+                stopbang_tired = bool(survey[29]) if survey[29] is not None else False
+                stopbang_observed_apnea = bool(survey[30]) if survey[30] is not None else False
+                stopbang_pressure = bool(survey[31]) if survey[31] is not None else False
+            else:
+                # Estimate from total score if individual values not available
+                stopbang_snoring = stopbang_score >= 1
+                stopbang_tired = ess_score >= 11
+                stopbang_observed_apnea = False
+                stopbang_pressure = bool(hypertension)
+            
+            physical_activity_time = survey[32] if has_extended_columns and len(survey) > 32 and survey[32] is not None else 'Unknown'
         
         # Use actual ESS individual scores if available, otherwise calculate from total
         if ess_sitting_reading or ess_watching_tv or ess_public_sitting:
