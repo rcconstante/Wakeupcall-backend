@@ -2100,6 +2100,20 @@ def generate_pdf_report():
             sleep_duration_hours = data.get('sleep_duration_hours', 7.0)
             weekly_steps_json = data.get('weekly_steps_json', '{}')
             weekly_sleep_json = data.get('weekly_sleep_json', '{}')
+            
+            # Initialize ESS individual scores for guest users (distribute evenly)
+            avg_ess = ess_score / 8 if ess_score else 0
+            ess_sitting_reading = ess_watching_tv = ess_public_sitting = ess_passenger_car = int(avg_ess)
+            ess_lying_down_afternoon = ess_talking = ess_after_lunch = ess_traffic_stop = int(avg_ess)
+            
+            # Initialize STOP-BANG individual responses for guest users (estimate from total)
+            stopbang_snoring = stopbang_score >= 1
+            stopbang_tired = ess_score >= 11
+            stopbang_observed_apnea = False
+            stopbang_pressure = bool(hypertension)
+            
+            # Physical activity time
+            physical_activity_time = data.get('physical_activity_time', 'Unknown')
         else:
             user_id = request.current_user['id']
             
