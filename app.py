@@ -1227,7 +1227,8 @@ def submit_survey():
         tired_after_sleep = surveys.get('tired_after_sleep', 'Unknown')  # Post-sleep tiredness
         feels_sleepy_daytime = 1 if surveys.get('feels_sleepy_daytime', tired) else 0
         nodded_off_driving = 1 if surveys.get('nodded_off_driving', False) else 0
-        physical_activity_time = surveys.get('physical_activity_time', 'Unknown')  # When they exercise
+        physical_activity_time = surveys.get('physical_activity_time', 'Unknown')  # Physical activity type/duration
+        print(f"📊 Survey received physical_activity_time: '{physical_activity_time}'")
         
         # Extract Google Fit data
         fit_data = data.get('google_fit', {})
@@ -2227,9 +2228,10 @@ def generate_pdf_report():
         
         # Generate charts for PDF
         def generate_shap_chart():
-            # Calculate impact scores
+            # Calculate impact scores based on actual survey responses
             age_impact = 0.75 if age >= 50 else 0.40
-            snoring_impact = 0.85 if stopbang_score >= 1 else 0.25
+            # Use actual snoring value instead of stopbang proxy
+            snoring_impact = 0.85 if snoring else 0.25
             stopbang_impact = (stopbang_score / 8.0) * 0.9 + 0.1
             
             if neck_cm >= 43:
@@ -2372,6 +2374,7 @@ def generate_pdf_report():
         # Generate comprehensive recommendations using the recommendation engine
         sex_binary = 1 if sex == 'Male' else 0
         actual_physical_activity = data.get('physical_activity_time', None) if is_guest else physical_activity_time
+        print(f"📊 Physical Activity for PDF: is_guest={is_guest}, value='{actual_physical_activity}'")
         recommendation = generate_ml_recommendation(
             osa_probability, risk_level, age, bmi, neck_cm,
             hypertension, diabetes, smokes, alcohol,
@@ -2383,6 +2386,9 @@ def generate_pdf_report():
         )
         
         # Build data dictionary for PDF generator
+        final_physical_activity = data.get('physical_activity_time', 'Not specified') if is_guest else (physical_activity_time if physical_activity_time and physical_activity_time != 'Unknown' else 'Not specified')
+        print(f"📄 PDF physical_activity_time: '{final_physical_activity}'")
+        
         pdf_data = {
             'patient': {
                 'name': user_name,
@@ -2430,7 +2436,7 @@ def generate_pdf_report():
             'lifestyle': {
                 'smoking': smokes,
                 'alcohol': alcohol,
-                'physical_activity_time': data.get('physical_activity_time', 'Unknown') if is_guest else physical_activity_time
+                'physical_activity_time': final_physical_activity
             },
             'medical_history': {
                 'hypertension': hypertension,
