@@ -2131,9 +2131,11 @@ def generate_pdf_report():
             stopbang_observed_apnea = False
             stopbang_pressure = bool(hypertension)
             
-            # Physical activity time and type
-            physical_activity_time = data.get('physical_activity_time', 'Unknown')
-            physical_activity_type = data.get('physical_activity_type', 'Unknown')
+            # Physical activity time and type (check both top-level and nested in survey_responses)
+            survey_responses = data.get('survey_responses', {})
+            physical_activity_time = survey_responses.get('physical_activity_time') or data.get('physical_activity_time', 'Unknown')
+            physical_activity_type = survey_responses.get('physical_activity_type') or data.get('physical_activity_type', 'Unknown')
+            print(f"📊 Guest PDF - extracted physical_activity_type: '{physical_activity_type}' from survey_responses")
         else:
             user_id = request.current_user['id']
             
