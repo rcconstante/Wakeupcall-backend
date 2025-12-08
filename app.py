@@ -157,6 +157,9 @@ def init_db():
         cursor.execute('ALTER TABLE user_surveys ADD COLUMN physical_activity_time TEXT')
     except: pass
     try:
+        cursor.execute('ALTER TABLE user_surveys ADD COLUMN physical_activity_type TEXT')
+    except: pass
+    try:
         cursor.execute('ALTER TABLE user_surveys ADD COLUMN ess_sitting_reading INTEGER')
     except: pass
     try:
@@ -1227,8 +1230,11 @@ def submit_survey():
         tired_after_sleep = surveys.get('tired_after_sleep', 'Unknown')  # Post-sleep tiredness
         feels_sleepy_daytime = 1 if surveys.get('feels_sleepy_daytime', tired) else 0
         nodded_off_driving = 1 if surveys.get('nodded_off_driving', False) else 0
-        physical_activity_time = surveys.get('physical_activity_time', 'Unknown')  # Physical activity type/duration
+        physical_activity_time = surveys.get('physical_activity_time', 'Unknown')  # When they exercise
+        physical_activity_type = surveys.get('physical_activity_type', 'Unknown')  # What activity (Swimming, Cycling, etc)
         print(f"📊 Survey received physical_activity_time: '{physical_activity_time}'")
+        print(f"📊 Survey received physical_activity_type: '{physical_activity_type}'")
+        print(f"📊 All survey_responses keys: {list(surveys.keys())}")
         
         # Extract Google Fit data
         fit_data = data.get('google_fit', {})
@@ -1461,6 +1467,7 @@ def submit_survey():
                 print(f"   Age: {age}, Sex: {demo.get('sex', 'male')}, BMI: {bmi:.1f}")
                 print(f"   ESS: {ess_score}, Berlin: {berlin_score_binary}, STOP-BANG: {stopbang_score}")
                 print(f"   Certainty: {certainty:.3f} ({certainty*100:.1f}%), Risk: {risk_level}")
+                print(f"   💪 Physical Activity being saved to DB: '{physical_activity_time}'")
                 
                 cursor.execute('''
                     UPDATE user_surveys 
@@ -1472,7 +1479,7 @@ def submit_survey():
                         weekly_steps_json = ?, weekly_sleep_json = ?,
                         snoring_level = ?, snoring_frequency = ?, snoring_bothers_others = ?,
                         tired_during_day = ?, tired_after_sleep = ?, feels_sleepy_daytime = ?,
-                        nodded_off_driving = ?, physical_activity_time = ?,
+                        nodded_off_driving = ?, physical_activity_time = ?, physical_activity_type = ?,
                         ess_sitting_reading = ?, ess_watching_tv = ?, ess_public_sitting = ?,
                         ess_passenger_car = ?, ess_lying_down_afternoon = ?, ess_talking = ?,
                         ess_after_lunch = ?, ess_traffic_stop = ?,
@@ -1485,7 +1492,7 @@ def submit_survey():
                       daily_steps, average_daily_steps, sleep_duration, weekly_steps_json, weekly_sleep_json,
                       snoring_level, snoring_frequency, snoring_bothers_others,
                       tired_during_day, tired_after_sleep, feels_sleepy_daytime,
-                      nodded_off_driving, physical_activity_time,
+                      nodded_off_driving, physical_activity_time, physical_activity_type,
                       ess_sitting_reading, ess_watching_tv, ess_public_sitting,
                       ess_passenger_car, ess_lying_down_afternoon, ess_talking,
                       ess_after_lunch, ess_traffic_stop,
@@ -1497,12 +1504,13 @@ def submit_survey():
                 
                 # Verify the update by reading back
                 cursor.execute('''
-                    SELECT age, ess_score, berlin_score, stopbang_score, osa_probability, risk_level 
+                    SELECT age, ess_score, berlin_score, stopbang_score, osa_probability, risk_level, physical_activity_time
                     FROM user_surveys WHERE user_id = ?
                 ''', (user_id,))
                 verify = cursor.fetchone()
                 if verify:
                     print(f"🔍 Verification - DB now has: Age={verify[0]}, ESS={verify[1]}, Berlin={verify[2]}, STOP-BANG={verify[3]}, OSA={verify[4]:.3f}, Risk={verify[5]}")
+                    print(f"🔍 Physical Activity in DB: '{verify[6]}'")
             else:
                 # INSERT new survey
                 cursor.execute('''
@@ -1514,20 +1522,20 @@ def submit_survey():
                      weekly_steps_json, weekly_sleep_json,
                      snoring_level, snoring_frequency, snoring_bothers_others,
                      tired_during_day, tired_after_sleep, feels_sleepy_daytime,
-                     nodded_off_driving, physical_activity_time,
+                     nodded_off_driving, physical_activity_time, physical_activity_type,
                      ess_sitting_reading, ess_watching_tv, ess_public_sitting,
                      ess_passenger_car, ess_lying_down_afternoon, ess_talking,
                      ess_after_lunch, ess_traffic_stop,
                      stopbang_snoring, stopbang_tired, stopbang_observed_apnea, stopbang_pressure)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (user_id, age, demo.get('sex', 'male'), height_cm, weight_kg, neck_cm, bmi,
                       hypertension, diabetes, depression, smokes, alcohol,
                       ess_score, berlin_score_binary, stopbang_score, certainty, risk_level,
                       daily_steps, average_daily_steps, sleep_duration, weekly_steps_json, weekly_sleep_json,
                       snoring_level, snoring_frequency, snoring_bothers_others,
                       tired_during_day, tired_after_sleep, feels_sleepy_daytime,
-                      nodded_off_driving, physical_activity_time,
+                      nodded_off_driving, physical_activity_time, physical_activity_type,
                       ess_sitting_reading, ess_watching_tv, ess_public_sitting,
                       ess_passenger_car, ess_lying_down_afternoon, ess_talking,
                       ess_after_lunch, ess_traffic_stop,
@@ -2117,8 +2125,9 @@ def generate_pdf_report():
             stopbang_observed_apnea = False
             stopbang_pressure = bool(hypertension)
             
-            # Physical activity time
+            # Physical activity time and type
             physical_activity_time = data.get('physical_activity_time', 'Unknown')
+            physical_activity_type = data.get('physical_activity_type', 'Unknown')
         else:
             user_id = request.current_user['id']
             
@@ -2137,7 +2146,7 @@ def generate_pdf_report():
                            ess_sitting_reading, ess_watching_tv, ess_public_sitting, ess_passenger_car,
                            ess_lying_down_afternoon, ess_talking, ess_after_lunch, ess_traffic_stop,
                            stopbang_snoring, stopbang_tired, stopbang_observed_apnea, stopbang_pressure,
-                           physical_activity_time
+                           physical_activity_time, physical_activity_type
                     FROM user_surveys
                     WHERE user_id = ?
                     ORDER BY completed_at DESC
@@ -2202,8 +2211,10 @@ def generate_pdf_report():
                 stopbang_observed_apnea = False
                 stopbang_pressure = bool(hypertension)
             
-            # Physical activity time (use default if not available)
+            # Physical activity time and type (use default if not available)
             physical_activity_time = survey[32] if has_extended_columns and len(survey) > 32 and survey[32] is not None else 'Unknown'
+            physical_activity_type = survey[33] if has_extended_columns and len(survey) > 33 and survey[33] is not None else 'Unknown'
+            print(f"📊 Retrieved from DB - physical_activity_time: '{physical_activity_time}', physical_activity_type: '{physical_activity_type}'")
         
         # Initialize ESS variables with defaults if not already set (for non-authenticated users)
         if 'ess_sitting_reading' not in locals():
@@ -2387,7 +2398,9 @@ def generate_pdf_report():
         
         # Build data dictionary for PDF generator
         final_physical_activity = data.get('physical_activity_time', 'Not specified') if is_guest else (physical_activity_time if physical_activity_time and physical_activity_time != 'Unknown' else 'Not specified')
-        print(f"📄 PDF physical_activity_time: '{final_physical_activity}'")
+        final_physical_activity_type = physical_activity_type if physical_activity_type and physical_activity_type != 'Unknown' else 'Not specified'
+        print(f"📄 PDF will use - physical_activity_type: '{final_physical_activity_type}' (WHAT user does)")
+        print(f"📄 PDF will use - physical_activity_time: '{final_physical_activity}' (WHEN user exercises)")
         
         pdf_data = {
             'patient': {
@@ -2436,7 +2449,7 @@ def generate_pdf_report():
             'lifestyle': {
                 'smoking': smokes,
                 'alcohol': alcohol,
-                'physical_activity_time': final_physical_activity
+                'physical_activity_time': final_physical_activity_type  # Display WHAT activity (Swimming, Cycling, etc)
             },
             'medical_history': {
                 'hypertension': hypertension,
