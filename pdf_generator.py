@@ -95,7 +95,19 @@ class WakeUpCallPDFGenerator:
         bmi = patient.get('bmi', 0)
         neck_cm_str = patient.get('neck_circumference', '0 cm')
         neck_cm = float(neck_cm_str.replace(' cm', '').replace('cm', '')) if isinstance(neck_cm_str, str) else neck_cm_str
-        stopbang_score = stop_bang.get('score', 0)
+        
+        # Calculate STOP-BANG score from actual individual responses (not the stored score)
+        stopbang_score = sum([
+            1 if stop_bang.get('snoring') else 0,
+            1 if stop_bang.get('tiredness') else 0,
+            1 if stop_bang.get('observed_apnea') else 0,
+            1 if stop_bang.get('high_blood_pressure') else 0,
+            1 if stop_bang.get('bmi_over_35') else 0,
+            1 if stop_bang.get('age_over_50') else 0,
+            1 if stop_bang.get('neck_circumference_large') else 0,
+            1 if stop_bang.get('gender_male') else 0
+        ])
+        
         ess_score = ess.get('total_score', 0)
         
         explanations = []
@@ -266,17 +278,8 @@ class WakeUpCallPDFGenerator:
         
         stop_bang = data.get('stop_bang', {})
         
-        # Recalculate actual score from boolean values to ensure accuracy
-        actual_score = sum([
-            1 if stop_bang.get('snoring') else 0,
-            1 if stop_bang.get('tiredness') else 0,
-            1 if stop_bang.get('observed_apnea') else 0,
-            1 if stop_bang.get('high_blood_pressure') else 0,
-            1 if stop_bang.get('bmi_over_35') else 0,
-            1 if stop_bang.get('age_over_50') else 0,
-            1 if stop_bang.get('neck_circumference_large') else 0,
-            1 if stop_bang.get('gender_male') else 0
-        ])
+        # Use the stopbang_score already calculated from individual responses at the top
+        actual_score = stopbang_score
         
         if actual_score >= 5:
             risk_text = "High Risk"
