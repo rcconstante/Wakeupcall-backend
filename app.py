@@ -1164,6 +1164,12 @@ def submit_survey():
         print(f"🔵 User ID: {user_id}")
         print(f"🔵 Raw data keys: {list(data.keys())}")
         
+        # DEBUG: Check if survey_responses contains physical_activity_type
+        survey_debug = data.get('survey_responses', {})
+        print(f"🔍 DEBUG - survey_responses keys: {list(survey_debug.keys())}")
+        print(f"🔍 DEBUG - physical_activity_time value: '{survey_debug.get('physical_activity_time')}'")
+        print(f"🔍 DEBUG - physical_activity_type value: '{survey_debug.get('physical_activity_type')}'")
+        
         # Extract demographics
         demo = data.get('demographics', {})
         print(f"🔵 Demographics received: {demo}")
