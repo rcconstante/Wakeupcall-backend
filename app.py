@@ -335,12 +335,10 @@ if scaler is None:
 else:
     print("✅ Scaler loaded successfully!")
 
-def generate_ml_recommendation(osa_probability, risk_level, age, bmi, neck_cm, hypertension, diabetes, smokes, alcohol, ess_score, berlin_score, stopbang_score, sleep_duration=7.0, daily_steps=5000, physical_activity_time=None):
+def generate_ml_recommendation(osa_probability, risk_level, age, bmi, neck_cm, hypertension, diabetes, smokes, alcohol, ess_score, berlin_score, stopbang_score, sleep_duration=7.0, daily_steps=5000, physical_activity_time=None, snoring=False, sex=1):
     """Generate personalized recommendations using comprehensive recommendation engine.
     Limits recommendations based on risk level to avoid overwhelming users."""
     
-    # Use the new RecommendationEngine
-    sex = 1  # Default to male (conservative for OSA risk)
     recommendations = RecommendationEngine.generate_recommendations(
         age=age,
         sex=sex,
@@ -356,7 +354,8 @@ def generate_ml_recommendation(osa_probability, risk_level, age, bmi, neck_cm, h
         sleep_duration=sleep_duration,
         daily_steps=daily_steps,
         risk_level=risk_level,
-        physical_activity_time=physical_activity_time
+        physical_activity_time=physical_activity_time,
+        snoring=snoring
     )
     
     # Sort by priority (descending) and limit based on risk level
@@ -1018,11 +1017,13 @@ def get_latest_survey():
             stopbang_category = "High Risk"
         
         # Generate comprehensive recommendations using the recommendation engine
+        snoring_val = False  # For get-latest we don't have snoring stored separately
+        sex_val = 1 if sex_str and sex_str.lower() == 'male' else 0
         recommendation = generate_ml_recommendation(
             osa_probability, risk_level, age, bmi, neck_cm,
             hypertension, diabetes, smokes, alcohol,
             ess_score, berlin_score, stopbang_score,
-            sleep_duration, daily_steps
+            sleep_duration, daily_steps, None, snoring_val, sex_val
         )
         
         # Calculate top risk factors
@@ -1381,7 +1382,7 @@ def submit_survey():
                     osa_probability, risk_level, age, bmi, neck_cm, 
                     hypertension, diabetes, smokes, alcohol, 
                     ess_score, berlin_score_binary, stopbang_score,
-                    sleep_duration, daily_steps
+                    sleep_duration, daily_steps, physical_activity_time, snoring
                 )
             except Exception as e:
                 print(f"❌ Prediction error: {e}")
@@ -1743,12 +1744,15 @@ def predict_osa_risk():
         high_risk_prob = float(y_proba[0]) if len(y_proba) > 0 else certainty
         
         # Generate comprehensive recommendations
+        snoring_val = data.get('Snoring', 0) == 1 or data.get('STOP_Snore', 0) == 1
+        sex_val = data.get('Sex', 1)
         recommendation = generate_ml_recommendation(
             high_risk_prob, risk_level, 
             data['Age'], data['BMI'], data['Neck_Circumference'],
             data['Hypertension'], data['Diabetes'], data['Smokes'], data['Alcohol'],
             data['Epworth_Score'], data['Berlin_Score'], data.get('STOPBANG', data.get('STOPBANG_Total', 0)),
-            data.get('Sleep_Duration', 7.0), data.get('Daily_Steps', 5000)
+            data.get('Sleep_Duration', 7.0), data.get('Daily_Steps', 5000),
+            data.get('physical_activity_time'), snoring_val, sex_val
         )
         
         # Return prediction result
@@ -2361,7 +2365,8 @@ def generate_pdf_report():
         # Calculate BANG components from demographics (these are always calculated)
         bmi_over_35 = bmi > 35
         age_over_50 = age > 50
-        neck_large = neck_cm >= 40 if sex == 'Male' else neck_cm >= 35
+        # Use STOP-BANG standard threshold: >= 40 cm regardless of sex
+        neck_large = neck_cm >= 40
         gender_male = (sex == 'Male')
         
         # Generate comprehensive recommendations using the recommendation engine
@@ -2372,7 +2377,9 @@ def generate_pdf_report():
             hypertension, diabetes, smokes, alcohol,
             ess_score, berlin_score, stopbang_score,
             sleep_duration_hours, daily_steps,
-            physical_activity_time=actual_physical_activity
+            physical_activity_time=actual_physical_activity,
+            snoring=snoring,
+            sex=sex_binary
         )
         
         # Build data dictionary for PDF generator

@@ -42,7 +42,8 @@ class RecommendationEngine:
         sleep_duration: float,
         daily_steps: int = 5000,
         risk_level: str = "Unknown",
-        physical_activity_time: str = None
+        physical_activity_time: str = None,
+        snoring: bool = False
     ) -> List[Recommendation]:
         """Generate all applicable recommendations based on user data."""
         
@@ -77,8 +78,8 @@ class RecommendationEngine:
                 priority=5
             ))
         
-        # Snoring (implied by STOP-BANG >= 1)
-        if stopbang_score >= 1:
+        # Snoring
+        if snoring:
             recommendations.append(Recommendation(
                 title="Manage Snoring and Airway Obstruction",
                 description="You reported regular snoring, which can be a sign of partial airway obstruction during sleep. Side-sleeping, using a supportive pillow, and avoiding heavy meals close to bedtime may help reduce snoring.",
@@ -203,7 +204,7 @@ class RecommendationEngine:
             ))
         
         # Snoring + Hypertension
-        if stopbang_score >= 1 and hypertension:
+        if snoring and hypertension:
             recommendations.append(Recommendation(
                 title="Snoring and Blood Pressure Risk",
                 description="Snoring together with high blood pressure may increase strain on your heart and blood vessels during sleep. This pattern is often seen in individuals with undiagnosed sleep apnea.",
@@ -212,7 +213,7 @@ class RecommendationEngine:
             ))
         
         # Snoring + High BMI
-        if stopbang_score >= 1 and bmi >= 30:
+        if snoring and bmi >= 30:
             recommendations.append(Recommendation(
                 title="Snoring and Weight-Related Airway Narrowing",
                 description="Snoring combined with a higher BMI increases the likelihood that your upper airway becomes narrowed or collapses during sleep, contributing to louder snoring or breathing pauses.",
@@ -221,7 +222,7 @@ class RecommendationEngine:
             ))
         
         # Snoring + High ESS
-        if stopbang_score >= 1 and ess_score >= 11:
+        if snoring and ess_score >= 11:
             recommendations.append(Recommendation(
                 title="Snoring and Excessive Daytime Sleepiness",
                 description="Snoring plus significant daytime sleepiness suggests that your sleep may be fragmented or non-restorative, possibly due to repeated airway obstruction during the night.",
@@ -266,7 +267,7 @@ class RecommendationEngine:
             ))
         
         # Alcohol + Snoring
-        if alcohol and stopbang_score >= 1:
+        if alcohol and snoring:
             recommendations.append(Recommendation(
                 title="Alcohol's Effect on Snoring",
                 description="Alcohol relaxes the muscles in the throat and can significantly worsen snoring intensity and frequency. Avoiding alcohol close to bedtime may reduce snoring.",
@@ -306,7 +307,7 @@ class RecommendationEngine:
         # ============================================================
         
         # Snoring + High BMI + High ESS
-        if stopbang_score >= 1 and bmi >= 30 and ess_score >= 11:
+        if snoring and bmi >= 30 and ess_score >= 11:
             recommendations.append(Recommendation(
                 title="Strong Pattern of Possible Sleep-Disordered Breathing",
                 description="The combination of snoring, higher BMI, and significant daytime sleepiness strongly suggests fragmented or disrupted sleep, possibly due to repeated breathing interruptions at night.",
@@ -324,7 +325,7 @@ class RecommendationEngine:
             ))
         
         # Hypertension + Snoring + High ESS
-        if hypertension and stopbang_score >= 1 and ess_score >= 11:
+        if hypertension and snoring and ess_score >= 11:
             recommendations.append(Recommendation(
                 title="Cardiovascular Strain from Poor Sleep",
                 description="High blood pressure combined with snoring and daytime sleepiness may indicate that your heart and blood vessels are under extra strain during sleep, often seen in people with sleep apnea.",
@@ -342,7 +343,7 @@ class RecommendationEngine:
             ))
         
         # Diabetes + Hypertension + Snoring
-        if diabetes and hypertension and stopbang_score >= 1:
+        if diabetes and hypertension and snoring:
             recommendations.append(Recommendation(
                 title="Metabolic, Blood Pressure, and Airway Red Flags",
                 description="The combination of diabetes, hypertension, and snoring is frequently observed in individuals with underlying sleep apnea. Addressing sleep quality can be an important part of overall health management.",
@@ -351,7 +352,7 @@ class RecommendationEngine:
             ))
         
         # Low Activity + High BMI + Snoring
-        if physical_activity_minutes < 30 and bmi >= 30 and stopbang_score >= 1:
+        if physical_activity_minutes < 30 and bmi >= 30 and snoring:
             recommendations.append(Recommendation(
                 title="Activity, Weight, and Breathing Difficulties",
                 description="Low daily movement combined with higher BMI and snoring may indicate increased airway resistance and reduced respiratory fitness. Gradual increases in physical activity can help support better breathing and sleep.",
@@ -406,38 +407,64 @@ class RecommendationEngine:
     @staticmethod
     def _parse_activity_time(activity_time_str: str) -> int:
         """Parse physical activity time from survey response string."""
-        if not activity_time_str or activity_time_str in ['Unknown', '', None]:
+        if not activity_time_str or activity_time_str in ['Unknown', '', None, 'Not specified', 'Not Specified']:
             return None
         
         activity_time_str = activity_time_str.lower().strip()
         
-        # Map common responses to minutes
+        # Map common time duration responses to minutes
+        # Order matters: check longer/more specific patterns first
         activity_map = {
-            'less than 30 minutes': 20,
-            'less than 30 min': 20,
-            '< 30 minutes': 20,
-            '<30 min': 20,
-            '30-45 minutes': 37,
-            '30-45 min': 37,
-            '30 to 45 minutes': 37,
-            '45 minutes': 45,
-            '45 min': 45,
-            '45-60 minutes': 52,
-            '45-60 min': 52,
-            '45 to 60 minutes': 52,
-            '1 hour': 60,
-            '60 minutes': 60,
             'more than 1 hour': 75,
             'more than 60 minutes': 75,
             '> 1 hour': 75,
             '>1 hour': 75,
+            '45-60 minutes': 52,
+            '45-60 min': 52,
+            '45 to 60 minutes': 52,
+            '30-45 minutes': 37,
+            '30-45 min': 37,
+            '30 to 45 minutes': 37,
+            'less than 30 minutes': 20,
+            'less than 30 min': 20,
+            '< 30 minutes': 20,
+            '<30 min': 20,
+            '1 hour': 60,
+            '60 minutes': 60,
+            '45 minutes': 45,
+            '45 min': 45,
             'none': 0,
             'no exercise': 0,
             'i don\'t exercise': 0,
         }
         
+        # Map activity types to estimated minutes (if user provides activity type instead of duration)
+        activity_type_map = {
+            'walking': 30,
+            'jogging': 45,
+            'running': 60,
+            'sports': 60,
+            'gym': 60,
+            'cycling': 45,
+            'swimming': 45,
+            'yoga': 30,
+            'aerobics': 45,
+            'dancing': 45,
+            'basketball': 60,
+            'football': 60,
+            'soccer': 60,
+            'tennis': 60,
+            'hiking': 60,
+        }
+        
+        # First check for time duration
         for key, minutes in activity_map.items():
             if key in activity_time_str:
+                return minutes
+        
+        # Then check for activity type
+        for activity_type, minutes in activity_type_map.items():
+            if activity_type in activity_time_str:
                 return minutes
         
         # Try to extract numeric value

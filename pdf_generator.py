@@ -372,8 +372,11 @@ class WakeUpCallPDFGenerator:
         
         # Get physical activity time with proper formatting
         physical_activity = lifestyle.get('physical_activity_time', 'Not specified')
-        if physical_activity in [None, '', 'Unknown']:
+        if physical_activity in [None, '', 'Unknown', 'Not Specified']:
             physical_activity = 'Not specified'
+        # Capitalize first letter for display
+        elif isinstance(physical_activity, str) and physical_activity:
+            physical_activity = physical_activity.strip()
         
         lifestyle_data = [
             ['Smoking', 'Yes' if lifestyle.get('smoking') else 'No'],
