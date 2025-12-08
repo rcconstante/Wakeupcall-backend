@@ -2226,6 +2226,17 @@ def generate_pdf_report():
         weekly_steps_data = json.loads(weekly_steps_json) if weekly_steps_json else {}
         weekly_sleep_data = json.loads(weekly_sleep_json) if weekly_sleep_json else {}
         
+        # Determine snoring value BEFORE generating charts (needed for SHAP)
+        # For guest users, these come from request data; for registered users, from database
+        if is_guest:
+            snoring = data.get('stopbang_snoring', False)
+            tiredness = data.get('stopbang_tired', False) 
+            observed_apnea = data.get('stopbang_observed_apnea', False)
+        else:
+            snoring = stopbang_snoring
+            tiredness = stopbang_tired
+            observed_apnea = stopbang_observed_apnea
+        
         # Generate charts for PDF
         def generate_shap_chart():
             # Calculate impact scores based on actual survey responses
@@ -2352,17 +2363,6 @@ def generate_pdf_report():
         steps_chart_buffer = generate_steps_chart(weekly_steps_data) if weekly_steps_data else None
         sleep_chart_buffer = generate_sleep_chart(weekly_sleep_data) if weekly_sleep_data else None
         shap_chart_buffer = generate_shap_chart()
-        
-        # Use actual STOP-BANG responses from survey (not estimates)
-        # For guest users, these come from request data; for registered users, from database
-        if is_guest:
-            snoring = data.get('stopbang_snoring', False)
-            tiredness = data.get('stopbang_tired', False) 
-            observed_apnea = data.get('stopbang_observed_apnea', False)
-        else:
-            snoring = stopbang_snoring
-            tiredness = stopbang_tired
-            observed_apnea = stopbang_observed_apnea
         
         # Calculate BANG components from demographics (these are always calculated)
         bmi_over_35 = bmi > 35
