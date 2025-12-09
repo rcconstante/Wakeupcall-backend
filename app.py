@@ -209,15 +209,21 @@ def require_auth(f):
     def decorated_function(*args, **kwargs):
         token = request.headers.get('Authorization')
         
+        print(f"🔐 Authentication attempt - Endpoint: {request.endpoint}")
+        
         if not token:
+            print(f"❌ No authorization token provided")
             return jsonify({'error': 'No authorization token provided', 'success': False}), 401
         
         # Remove 'Bearer ' prefix if present
         if token.startswith('Bearer '):
             token = token[7:]
         
+        print(f"🔑 Token received: {token[:20]}... (length: {len(token)})")
+        
         # Handle guest mode tokens
         if token.startswith('guest_token_'):
+            print(f"👤 Guest mode detected")
             # Guest user - create temporary user context
             request.current_user = {
                 'id': -1,  # Guest user ID
@@ -230,18 +236,33 @@ def require_auth(f):
         
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute('''
-            SELECT u.id, u.email, u.first_name, u.last_name 
-            FROM users u 
-            JOIN auth_tokens t ON u.id = t.user_id 
-            WHERE t.token = ? AND t.expires_at > ?
-        ''', (token, datetime.now()))
         
+        # Check if token exists
+        cursor.execute('SELECT user_id, expires_at FROM auth_tokens WHERE token = ?', (token,))
+        token_data = cursor.fetchone()
+        
+        if not token_data:
+            print(f"❌ Token not found in database")
+            conn.close()
+            return jsonify({'error': 'Invalid token', 'success': False}), 401
+        
+        user_id, expires_at_str = token_data
+        expires_at = datetime.fromisoformat(expires_at_str) if isinstance(expires_at_str, str) else expires_at_str
+        
+        if expires_at <= datetime.now():
+            print(f"❌ Token expired - Expired at: {expires_at}")
+            conn.close()
+            return jsonify({'error': 'Token expired', 'success': False}), 401
+        
+        cursor.execute('SELECT id, email, first_name, last_name FROM users WHERE id = ?', (user_id,))
         user = cursor.fetchone()
         conn.close()
         
         if not user:
-            return jsonify({'error': 'Invalid or expired token', 'success': False}), 401
+            print(f"❌ User not found for token")
+            return jsonify({'error': 'User not found', 'success': False}), 401
+        
+        print(f"✅ Authenticated: {user[1]} (ID: {user[0]})")
         
         # Pass user info to the route
         request.current_user = {
