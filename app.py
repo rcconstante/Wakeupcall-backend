@@ -2113,6 +2113,11 @@ def generate_pdf_report():
         is_guest = request.current_user.get('is_guest', False)
         user_name = f"{request.current_user['first_name']} {request.current_user['last_name']}"
         
+        print(f"📄 === PDF GENERATION REQUEST ===")
+        print(f"📄 User: {user_name}")
+        print(f"📄 Guest mode: {is_guest}")
+        print(f"📄 User ID: {request.current_user.get('id')}")
+        
         # For guest users, get data from request body; for registered users, get from database
         if is_guest:
             # Get survey data from request body for guest users
@@ -2159,6 +2164,7 @@ def generate_pdf_report():
             print(f"📊 Guest PDF - extracted physical_activity_type: '{physical_activity_type}' from survey_responses")
         else:
             user_id = request.current_user['id']
+            print(f"📊 Registered user PDF generation - User ID: {user_id}")
             
             # Get latest survey data from database for registered users
             conn = get_db()
@@ -2203,7 +2209,10 @@ def generate_pdf_report():
             conn.close()
             
             if not survey:
+                print(f"❌ No survey data found for user ID: {user_id}")
                 return jsonify({'error': 'No survey data found. Please complete the survey first.', 'success': False}), 404
+            
+            print(f"✅ Survey data found for user ID: {user_id} - {len(survey)} columns retrieved")
             
             # Extract data
             age, sex, height_cm, weight_kg, neck_cm, bmi = survey[0:6]
