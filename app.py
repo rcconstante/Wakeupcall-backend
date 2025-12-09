@@ -1494,7 +1494,8 @@ def submit_survey():
                 print(f"   Age: {age}, Sex: {demo.get('sex', 'male')}, BMI: {bmi:.1f}")
                 print(f"   ESS: {ess_score}, Berlin: {berlin_score_binary}, STOP-BANG: {stopbang_score}")
                 print(f"   Certainty: {certainty:.3f} ({certainty*100:.1f}%), Risk: {risk_level}")
-                print(f"   💪 Physical Activity being saved to DB: '{physical_activity_time}'")
+                print(f"   💪 Physical Activity TIME being saved to DB: '{physical_activity_time}'")
+                print(f"   💪 Physical Activity TYPE being saved to DB: '{physical_activity_type}'")
                 
                 cursor.execute('''
                     UPDATE user_surveys 
@@ -1531,13 +1532,14 @@ def submit_survey():
                 
                 # Verify the update by reading back
                 cursor.execute('''
-                    SELECT age, ess_score, berlin_score, stopbang_score, osa_probability, risk_level, physical_activity_time
+                    SELECT age, ess_score, berlin_score, stopbang_score, osa_probability, risk_level, physical_activity_time, physical_activity_type
                     FROM user_surveys WHERE user_id = ?
                 ''', (user_id,))
                 verify = cursor.fetchone()
                 if verify:
                     print(f"🔍 Verification - DB now has: Age={verify[0]}, ESS={verify[1]}, Berlin={verify[2]}, STOP-BANG={verify[3]}, OSA={verify[4]:.3f}, Risk={verify[5]}")
-                    print(f"🔍 Physical Activity in DB: '{verify[6]}'")
+                    print(f"🔍 Physical Activity TIME in DB: '{verify[6]}'")
+                    print(f"🔍 Physical Activity TYPE in DB: '{verify[7]}'")
             else:
                 # INSERT new survey
                 cursor.execute('''
@@ -1570,6 +1572,8 @@ def submit_survey():
                 survey_id = cursor.lastrowid
                 print(f"✅ Created new survey (ID: {survey_id}) for user {user_id}")
                 print(f"   Certainty: {certainty:.3f} ({certainty*100:.1f}%), Risk: {risk_level}")
+                print(f"   💪 Physical Activity TIME saved: '{physical_activity_time}'")
+                print(f"   💪 Physical Activity TYPE saved: '{physical_activity_type}'")
             
             conn.commit()
             print(f"✅ Database committed - survey data saved successfully")
