@@ -2104,6 +2104,10 @@ def generate_pdf_report():
     Generate PDF report from survey data using ReportLab
     Returns PDF file as binary response
     """
+    print(f"🚀 === /survey/generate-pdf ENDPOINT HIT ===")
+    print(f"🚀 Method: {request.method}")
+    print(f"🚀 Headers: Authorization present: {'Authorization' in request.headers}")
+    
     try:
         from pdf_generator import WakeUpCallPDFGenerator
         from io import BytesIO
