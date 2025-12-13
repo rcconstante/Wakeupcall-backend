@@ -1189,6 +1189,7 @@ def submit_survey():
         
         print(f"🔵 === SURVEY SUBMISSION RECEIVED ===")
         print(f"🔵 User ID: {user_id}")
+        print(f"🔵 Raw request body JSON: {data}")
         print(f"🔵 Raw data keys: {list(data.keys())}")
         
         # DEBUG: Check if survey_responses contains physical_activity_type
