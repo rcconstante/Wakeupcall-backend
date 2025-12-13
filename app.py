@@ -2173,11 +2173,12 @@ def generate_pdf_report():
             stopbang_observed_apnea = False
             stopbang_pressure = bool(hypertension)
             
-            # Physical activity time and type (check both top-level and nested in survey_responses)
+            # Physical activity time, type, and minutes (check both top-level and nested in survey_responses)
             survey_responses = data.get('survey_responses', {})
             physical_activity_time = survey_responses.get('physical_activity_time') or data.get('physical_activity_time', 'Unknown')
             physical_activity_type = survey_responses.get('physical_activity_type') or data.get('physical_activity_type', 'Unknown')
-            print(f"📊 Guest PDF - extracted physical_activity_type: '{physical_activity_type}' from survey_responses")
+            physical_activity_minutes = survey_responses.get('physical_activity_minutes') or data.get('physical_activity_minutes', None)
+            print(f"📊 Guest PDF - extracted physical_activity_type: '{physical_activity_type}', minutes: {physical_activity_minutes} from survey_responses")
         else:
             user_id = request.current_user['id']
             print(f"📊 Registered user PDF generation - User ID: {user_id}")
@@ -2444,13 +2445,20 @@ def generate_pdf_report():
         # Generate comprehensive recommendations using the recommendation engine
         sex_binary = 1 if sex == 'Male' else 0
         actual_physical_activity = data.get('physical_activity_time', None) if is_guest else physical_activity_time
-        print(f"📊 Physical Activity for PDF: is_guest={is_guest}, value='{actual_physical_activity}'")
+        # Get physical activity minutes from request data (guest) or from extracted variable
+        # For guest users, check both top-level and survey_responses (already extracted above)
+        if is_guest:
+            actual_physical_activity_minutes = physical_activity_minutes  # Already extracted from survey_responses above
+        else:
+            actual_physical_activity_minutes = None  # Registered users don't have this stored in DB yet
+        print(f"📊 Physical Activity for PDF: is_guest={is_guest}, time='{actual_physical_activity}', minutes={actual_physical_activity_minutes}")
         recommendation = generate_ml_recommendation(
             osa_probability, risk_level, age, bmi, neck_cm,
             hypertension, diabetes, smokes, alcohol,
             ess_score, berlin_score, stopbang_score,
             sleep_duration_hours, daily_steps,
             physical_activity_time=actual_physical_activity,
+            physical_activity_minutes=actual_physical_activity_minutes,
             snoring=snoring,
             sex=sex_binary
         )

@@ -117,7 +117,7 @@ class WakeUpCallPDFGenerator:
         if 'HIGH' in risk_level.upper():
             explanations.append(f"Your assessment indicates a <b>high risk</b> for obstructive sleep apnea (OSA) with an estimated probability of {osa_probability}%.")
             explanations.append("This means that based on your responses, you show multiple signs commonly associated with sleep-disordered breathing.")
-        elif 'MEDIUM' in risk_level.upper() or 'MODERATE' in risk_level.upper():
+        elif 'MEDIUM' in risk_level.upper() or 'MODERATE' in risk_level.upper() or 'INTERMEDIATE' in risk_level.upper():
             explanations.append(f"Your assessment indicates a <b>moderate risk</b> for obstructive sleep apnea (OSA) with an estimated probability of {osa_probability}%.")
             explanations.append("You show some indicators that warrant monitoring and possible further evaluation.")
         else:
