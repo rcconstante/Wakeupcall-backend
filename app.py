@@ -1423,6 +1423,9 @@ def submit_survey():
                 print(f"🔍 DEBUG: Sending certainty={certainty:.3f} (will be displayed as {certainty*100:.0f}%)")
                 
                 # Generate personalized recommendation
+                print(f"🏃 BEFORE generate_ml_recommendation call:")
+                print(f"   physical_activity_minutes = {physical_activity_minutes} (type: {type(physical_activity_minutes).__name__ if physical_activity_minutes is not None else 'NoneType'})")
+                print(f"   daily_steps = {daily_steps}")
                 recommendation = generate_ml_recommendation(
                     osa_probability, risk_level, age, bmi, neck_cm, 
                     hypertension, diabetes, smokes, alcohol, 

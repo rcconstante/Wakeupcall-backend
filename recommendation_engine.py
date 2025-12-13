@@ -50,6 +50,12 @@ class RecommendationEngine:
         
         recommendations = []
         
+        # DEBUG: Log all incoming parameters related to physical activity
+        print(f"🔍 RECOMMENDATION ENGINE INPUT:")
+        print(f"   physical_activity_minutes = {physical_activity_minutes} (type: {type(physical_activity_minutes).__name__})")
+        print(f"   daily_steps = {daily_steps}")
+        print(f"   physical_activity_time = {physical_activity_time}")
+        
         # Use physical_activity_minutes if provided (user's direct input), otherwise calculate from steps
         # Handle both int and string inputs
         if physical_activity_minutes is not None:
@@ -68,6 +74,8 @@ class RecommendationEngine:
             # Fallback: calculate from daily steps
             activity_mins = RecommendationEngine._calculate_activity_minutes(daily_steps)
             print(f"📊 physical_activity_minutes is None, calculated from steps ({daily_steps}): {activity_mins}")
+        
+        print(f"🏃 FINAL activity_mins value for recommendations: {activity_mins}")
         
         activity_type = RecommendationEngine._determine_activity_type(activity_mins)
         activity_time = "morning"  # Default
