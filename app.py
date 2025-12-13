@@ -160,6 +160,9 @@ def init_db():
         cursor.execute('ALTER TABLE user_surveys ADD COLUMN physical_activity_type TEXT')
     except: pass
     try:
+        cursor.execute('ALTER TABLE user_surveys ADD COLUMN physical_activity_minutes INTEGER')
+    except: pass
+    try:
         cursor.execute('ALTER TABLE user_surveys ADD COLUMN ess_sitting_reading INTEGER')
     except: pass
     try:
@@ -983,7 +986,7 @@ def get_latest_survey():
             SELECT id, age, sex, height_cm, weight_kg, neck_circumference_cm, bmi,
                    hypertension, diabetes, depression, smokes, alcohol,
                    ess_score, berlin_score, stopbang_score, osa_probability, risk_level, completed_at,
-                   sleep_duration_hours, daily_steps
+                   sleep_duration_hours, daily_steps, physical_activity_minutes
             FROM user_surveys
             WHERE user_id = ?
             ORDER BY completed_at DESC
@@ -1021,6 +1024,8 @@ def get_latest_survey():
         # completed_at = survey[17]
         sleep_duration = survey[18] if len(survey) > 18 and survey[18] else 7.0
         daily_steps = survey[19] if len(survey) > 19 and survey[19] else 5000
+        physical_activity_minutes = survey[20] if len(survey) > 20 and survey[20] else None
+        print(f"📊 get-latest: Retrieved physical_activity_minutes from DB: {physical_activity_minutes}")
         
         # Determine score categories
         if ess_score < 8:
@@ -1048,7 +1053,7 @@ def get_latest_survey():
             osa_probability, risk_level, age, bmi, neck_cm,
             hypertension, diabetes, smokes, alcohol,
             ess_score, berlin_score, stopbang_score,
-            sleep_duration, daily_steps, None, None, snoring_val, sex_val
+            sleep_duration, daily_steps, None, physical_activity_minutes, snoring_val, sex_val
         )
         
         # Calculate top risk factors
@@ -1559,20 +1564,20 @@ def submit_survey():
                      weekly_steps_json, weekly_sleep_json,
                      snoring_level, snoring_frequency, snoring_bothers_others,
                      tired_during_day, tired_after_sleep, feels_sleepy_daytime,
-                     nodded_off_driving, physical_activity_time, physical_activity_type,
+                     nodded_off_driving, physical_activity_time, physical_activity_type, physical_activity_minutes,
                      ess_sitting_reading, ess_watching_tv, ess_public_sitting,
                      ess_passenger_car, ess_lying_down_afternoon, ess_talking,
                      ess_after_lunch, ess_traffic_stop,
                      stopbang_snoring, stopbang_tired, stopbang_observed_apnea, stopbang_pressure)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (user_id, age, demo.get('sex', 'male'), height_cm, weight_kg, neck_cm, bmi,
                       hypertension, diabetes, depression, smokes, alcohol,
                       ess_score, berlin_score_binary, stopbang_score, certainty, risk_level,
                       daily_steps, average_daily_steps, sleep_duration, weekly_steps_json, weekly_sleep_json,
                       snoring_level, snoring_frequency, snoring_bothers_others,
                       tired_during_day, tired_after_sleep, feels_sleepy_daytime,
-                      nodded_off_driving, physical_activity_time, physical_activity_type,
+                      nodded_off_driving, physical_activity_time, physical_activity_type, physical_activity_minutes,
                       ess_sitting_reading, ess_watching_tv, ess_public_sitting,
                       ess_passenger_car, ess_lying_down_afternoon, ess_talking,
                       ess_after_lunch, ess_traffic_stop,
@@ -1582,6 +1587,7 @@ def submit_survey():
                 print(f"   Certainty: {certainty:.3f} ({certainty*100:.1f}%), Risk: {risk_level}")
                 print(f"   💪 Physical Activity TIME saved: '{physical_activity_time}'")
                 print(f"   💪 Physical Activity TYPE saved: '{physical_activity_type}'")
+                print(f"   💪 Physical Activity MINUTES saved: {physical_activity_minutes}")
             
             conn.commit()
             print(f"✅ Database committed - survey data saved successfully")
