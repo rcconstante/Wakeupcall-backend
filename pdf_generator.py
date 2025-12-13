@@ -219,7 +219,7 @@ class WakeUpCallPDFGenerator:
         osa_probability = assessment.get('osa_probability', 0)
         
         assessment_data = [
-            ['Predicted Risk Level:', risk_level.upper()],
+            ['Predicted Score Level:', risk_level.upper()],
             ['OSA Probability:', f"{osa_probability}%"]
         ]
         

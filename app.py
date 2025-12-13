@@ -1048,7 +1048,7 @@ def get_latest_survey():
             osa_probability, risk_level, age, bmi, neck_cm,
             hypertension, diabetes, smokes, alcohol,
             ess_score, berlin_score, stopbang_score,
-            sleep_duration, daily_steps, None, snoring_val, sex_val
+            sleep_duration, daily_steps, None, None, snoring_val, sex_val
         )
         
         # Calculate top risk factors
@@ -2254,10 +2254,13 @@ def generate_pdf_report():
             
             # STOP-BANG individual responses (use defaults if not available)
             if has_extended_columns and len(survey) > 31:
+                print(f"📊 DB query returned {len(survey)} columns, reading STOP-BANG from indices 28-31")
+                print(f"📊 Raw survey[28-31]: snoring={survey[28]}, tired={survey[29]}, observed={survey[30]}, pressure={survey[31]}")
                 stopbang_snoring = bool(survey[28]) if survey[28] is not None else False
                 stopbang_tired = bool(survey[29]) if survey[29] is not None else False
                 stopbang_observed_apnea = bool(survey[30]) if survey[30] is not None else False
                 stopbang_pressure = bool(survey[31]) if survey[31] is not None else False
+                print(f"📊 Parsed STOP-BANG: snoring={stopbang_snoring}, tired={stopbang_tired}, observed={stopbang_observed_apnea}, pressure={stopbang_pressure}")
             else:
                 # Estimate from total score if individual values not available
                 stopbang_snoring = stopbang_score >= 1
