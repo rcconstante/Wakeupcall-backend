@@ -1511,6 +1511,7 @@ def submit_survey():
                 print(f"   Certainty: {certainty:.3f} ({certainty*100:.1f}%), Risk: {risk_level}")
                 print(f"   💪 Physical Activity TIME being saved to DB: '{physical_activity_time}'")
                 print(f"   💪 Physical Activity TYPE being saved to DB: '{physical_activity_type}'")
+                print(f"   💪 Physical Activity MINUTES being saved to DB: {physical_activity_minutes}")
                 
                 cursor.execute('''
                     UPDATE user_surveys 
@@ -1522,7 +1523,7 @@ def submit_survey():
                         weekly_steps_json = ?, weekly_sleep_json = ?,
                         snoring_level = ?, snoring_frequency = ?, snoring_bothers_others = ?,
                         tired_during_day = ?, tired_after_sleep = ?, feels_sleepy_daytime = ?,
-                        nodded_off_driving = ?, physical_activity_time = ?, physical_activity_type = ?,
+                        nodded_off_driving = ?, physical_activity_time = ?, physical_activity_type = ?, physical_activity_minutes = ?,
                         ess_sitting_reading = ?, ess_watching_tv = ?, ess_public_sitting = ?,
                         ess_passenger_car = ?, ess_lying_down_afternoon = ?, ess_talking = ?,
                         ess_after_lunch = ?, ess_traffic_stop = ?,
@@ -1535,7 +1536,7 @@ def submit_survey():
                       daily_steps, average_daily_steps, sleep_duration, weekly_steps_json, weekly_sleep_json,
                       snoring_level, snoring_frequency, snoring_bothers_others,
                       tired_during_day, tired_after_sleep, feels_sleepy_daytime,
-                      nodded_off_driving, physical_activity_time, physical_activity_type,
+                      nodded_off_driving, physical_activity_time, physical_activity_type, physical_activity_minutes,
                       ess_sitting_reading, ess_watching_tv, ess_public_sitting,
                       ess_passenger_car, ess_lying_down_afternoon, ess_talking,
                       ess_after_lunch, ess_traffic_stop,
