@@ -2190,10 +2190,12 @@ def generate_pdf_report():
             
             # Physical activity time, type, and minutes (check both top-level and nested in survey_responses)
             survey_responses = data.get('survey_responses', {})
+            print(f"📊 Guest PDF - data.get('physical_activity_minutes'): {data.get('physical_activity_minutes')}")
+            print(f"📊 Guest PDF - survey_responses.get('physical_activity_minutes'): {survey_responses.get('physical_activity_minutes')}")
             physical_activity_time = survey_responses.get('physical_activity_time') or data.get('physical_activity_time', 'Unknown')
             physical_activity_type = survey_responses.get('physical_activity_type') or data.get('physical_activity_type', 'Unknown')
             physical_activity_minutes = survey_responses.get('physical_activity_minutes') or data.get('physical_activity_minutes', None)
-            print(f"📊 Guest PDF - extracted physical_activity_type: '{physical_activity_type}', minutes: {physical_activity_minutes} from survey_responses")
+            print(f"📊 Guest PDF - extracted physical_activity_type: '{physical_activity_type}', minutes: {physical_activity_minutes} from data")
         else:
             user_id = request.current_user['id']
             print(f"📊 Registered user PDF generation - User ID: {user_id}")
