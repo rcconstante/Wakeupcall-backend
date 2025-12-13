@@ -1270,7 +1270,10 @@ def submit_survey():
         nodded_off_driving = 1 if surveys.get('nodded_off_driving', False) else 0
         physical_activity_time = surveys.get('physical_activity_time', 'Unknown')  # When they exercise (Morning, Afternoon, Evening)
         physical_activity_type = surveys.get('physical_activity_type', 'Unknown')  # What activity (Swimming, Cycling, etc)
+        print(f"🔎 BEFORE extraction - 'physical_activity_minutes' in surveys: {'physical_activity_minutes' in surveys}")
+        print(f"🔎 BEFORE extraction - surveys.get('physical_activity_minutes'): {surveys.get('physical_activity_minutes')}")
         physical_activity_minutes = surveys.get('physical_activity_minutes', None)  # Daily activity minutes from user input
+        print(f"🔎 AFTER extraction - physical_activity_minutes variable: {physical_activity_minutes}")
         print(f"📊 Survey received physical_activity_time: '{physical_activity_time}'")
         print(f"📊 Survey received physical_activity_type: '{physical_activity_type}'")
         print(f"📊 Survey received physical_activity_minutes: {physical_activity_minutes} (type: {type(physical_activity_minutes).__name__})")
