@@ -1,4 +1,4 @@
-"""
+﻿"""
 Comprehensive recommendation engine for sleep apnea risk assessment.
 Implements evidence-based recommendations based on CDC, AASM, NSF, WHO, and other sources.
 """
@@ -43,18 +43,24 @@ class RecommendationEngine:
         daily_steps: int = 5000,
         risk_level: str = "Unknown",
         physical_activity_time: str = None,
+        physical_activity_minutes: int = None,
         snoring: bool = False
     ) -> List[Recommendation]:
         """Generate all applicable recommendations based on user data."""
         
         recommendations = []
         
-        # Calculate activity minutes from survey response if available, otherwise from steps
-        physical_activity_minutes = RecommendationEngine._parse_activity_time(physical_activity_time)
-        if physical_activity_minutes is None:
-            physical_activity_minutes = RecommendationEngine._calculate_activity_minutes(daily_steps)
+        # Use physical_activity_minutes if provided (user's direct input), otherwise calculate from steps
+        if physical_activity_minutes is not None:
+            # Use the actual minutes entered by user
+            activity_mins = physical_activity_minutes
+            print(f"📊 Using user-provided physical activity minutes: {activity_mins}")
+        else:
+            # Fallback: calculate from daily steps
+            activity_mins = RecommendationEngine._calculate_activity_minutes(daily_steps)
+            print(f"📊 Calculated physical activity minutes from steps ({daily_steps}): {activity_mins}")
         
-        activity_type = RecommendationEngine._determine_activity_type(physical_activity_minutes)
+        activity_type = RecommendationEngine._determine_activity_type(activity_mins)
         activity_time = "morning"  # Default
         
         # ============================================================
@@ -65,8 +71,8 @@ class RecommendationEngine:
         if sleep_duration < 7:
             recommendations.append(Recommendation(
                 title="Increase Your Total Sleep Time",
-                description="You reported sleeping less than 7 hours per night. Adults typically need 7–9 hours of sleep. Gradually move your bedtime earlier by about 15 minutes every few days to reduce sleep debt.",
-                source="Centers for Disease Control and Prevention (CDC) – Sleep Duration Recommendations; American Academy of Sleep Medicine (AASM).",
+                description="You reported sleeping less than 7 hours per night. Adults typically need 7â€“9 hours of sleep. Gradually move your bedtime earlier by about 15 minutes every few days to reduce sleep debt.",
+                source="Centers for Disease Control and Prevention (CDC) â€“ Sleep Duration Recommendations; American Academy of Sleep Medicine (AASM).",
                 priority=8
             ))
         
@@ -74,7 +80,7 @@ class RecommendationEngine:
             recommendations.append(Recommendation(
                 title="Monitor Oversleeping and Sleep Quality",
                 description="You reported sleeping 9 hours or more. Oversleeping can sometimes reflect poor sleep quality or fragmented sleep. Pay attention to how refreshed you feel during the day.",
-                source="American Academy of Sleep Medicine (AASM) – Sleep Quality Guidance.",
+                source="American Academy of Sleep Medicine (AASM) â€“ Sleep Quality Guidance.",
                 priority=5
             ))
         
@@ -83,7 +89,7 @@ class RecommendationEngine:
             recommendations.append(Recommendation(
                 title="Manage Snoring and Airway Obstruction",
                 description="You reported regular snoring, which can be a sign of partial airway obstruction during sleep. Side-sleeping, using a supportive pillow, and avoiding heavy meals close to bedtime may help reduce snoring.",
-                source="National Sleep Foundation – Snoring and Sleep; American Academy of Sleep Medicine (AASM) – Snoring and OSA.",
+                source="National Sleep Foundation â€“ Snoring and Sleep; American Academy of Sleep Medicine (AASM) â€“ Snoring and OSA.",
                 priority=7
             ))
         
@@ -92,7 +98,7 @@ class RecommendationEngine:
             recommendations.append(Recommendation(
                 title="Address Excessive Daytime Sleepiness",
                 description="Your Epworth Sleepiness Score is elevated, which suggests excessive daytime sleepiness. This often reflects poor sleep quality or fragmented sleep at night.",
-                source="Johns MW, Epworth Sleepiness Scale (1991); AASM – Daytime Sleepiness Guidance.",
+                source="Johns MW, Epworth Sleepiness Scale (1991); AASM â€“ Daytime Sleepiness Guidance.",
                 priority=9
             ))
         
@@ -101,7 +107,7 @@ class RecommendationEngine:
             recommendations.append(Recommendation(
                 title="Consider Weight's Impact on Breathing",
                 description="Your BMI falls in a range that can increase narrowing of the upper airway during sleep. Even modest weight changes may help improve breathing and sleep quality over time.",
-                source="World Health Organization (WHO) – BMI Classification; AASM – Obesity and OSA Risk.",
+                source="World Health Organization (WHO) â€“ BMI Classification; AASM â€“ Obesity and OSA Risk.",
                 priority=8
             ))
         
@@ -119,7 +125,7 @@ class RecommendationEngine:
             recommendations.append(Recommendation(
                 title="Hypertension and Sleep-Disordered Breathing",
                 description="You reported hypertension. High blood pressure is commonly linked with undiagnosed sleep-disordered breathing and may be worsened by poor sleep.",
-                source="American Heart Association (AHA) – OSA and Hypertension.",
+                source="American Heart Association (AHA) â€“ OSA and Hypertension.",
                 priority=8
             ))
         
@@ -128,7 +134,7 @@ class RecommendationEngine:
             recommendations.append(Recommendation(
                 title="Diabetes and Sleep Quality",
                 description="You reported diabetes. Blood sugar imbalance is often associated with disrupted sleep patterns, and sleep apnea is more frequent among people with diabetes.",
-                source="American Diabetes Association (ADA); AASM – Sleep and Metabolic Health.",
+                source="American Diabetes Association (ADA); AASM â€“ Sleep and Metabolic Health.",
                 priority=7
             ))
         
@@ -136,8 +142,8 @@ class RecommendationEngine:
         if alcohol:
             recommendations.append(Recommendation(
                 title="Reduce Alcohol Intake Near Bedtime",
-                description="Since you reported alcohol use, especially if taken in the evening, it can relax the upper airway muscles, worsen snoring, and increase breathing pauses during sleep. Try to avoid alcohol at least 3–4 hours before bed.",
-                source="American Academy of Sleep Medicine (AASM) – Alcohol and Sleep Quality.",
+                description="Since you reported alcohol use, especially if taken in the evening, it can relax the upper airway muscles, worsen snoring, and increase breathing pauses during sleep. Try to avoid alcohol at least 3â€“4 hours before bed.",
+                source="American Academy of Sleep Medicine (AASM) â€“ Alcohol and Sleep Quality.",
                 priority=6
             ))
         
@@ -151,19 +157,19 @@ class RecommendationEngine:
             ))
         
         # Physical Activity
-        if physical_activity_minutes < 30:
+        if activity_mins < 30:
             recommendations.append(Recommendation(
                 title="Increase Daily Physical Activity",
                 description="You reported less than 30 minutes of physical activity per day. Increasing daily movement to at least 30 minutes can help improve sleep quality, reduce sleep latency, and support overall health.",
-                source="CDC Physical Activity Guidelines; Harvard Medical School – Division of Sleep Medicine (Exercise and Sleep).",
+                source="CDC Physical Activity Guidelines; Harvard Medical School â€“ Division of Sleep Medicine (Exercise and Sleep).",
                 priority=7
             ))
         
-        if physical_activity_minutes >= 150:
+        if activity_mins >= 150:
             recommendations.append(Recommendation(
                 title="You Meet Activity Recommendations",
                 description="Your reported activity matches or exceeds commonly recommended weekly activity levels. Regular movement is associated with deeper sleep and better daytime energy.",
-                source="CDC Physical Activity Guidelines; Sleep Foundation – Exercise and Sleep Quality.",
+                source="CDC Physical Activity Guidelines; Sleep Foundation â€“ Exercise and Sleep Quality.",
                 priority=3
             ))
         
@@ -172,21 +178,21 @@ class RecommendationEngine:
             recommendations.append(Recommendation(
                 title="Light Activity and Sleep Support",
                 description="You indicated mostly light activity. While light movement supports general health, adding some moderate-intensity exercise may have a stronger positive effect on sleep depth and quality.",
-                source="Sleep Foundation – Exercise Intensity and Sleep.",
+                source="Sleep Foundation â€“ Exercise Intensity and Sleep.",
                 priority=5
             ))
         elif activity_type == "moderate":
             recommendations.append(Recommendation(
                 title="Moderate Exercise and Deeper Sleep",
                 description="Your activity level is in the moderate range. Regular moderate exercise is associated with improved deep sleep and reduced daytime fatigue.",
-                source="American Academy of Sleep Medicine (AASM) – Physical Activity and Sleep.",
+                source="American Academy of Sleep Medicine (AASM) â€“ Physical Activity and Sleep.",
                 priority=4
             ))
         elif activity_type == "vigorous":
             recommendations.append(Recommendation(
                 title="Timing Vigorous Exercise Wisely",
                 description="You reported vigorous activity. Vigorous exercise can benefit sleep overall, but if done too close to bedtime, it may temporarily increase alertness and make it harder to fall asleep.",
-                source="National Sleep Foundation – Vigorous Exercise and Sleep Onset.",
+                source="National Sleep Foundation â€“ Vigorous Exercise and Sleep Onset.",
                 priority=5
             ))
         
@@ -208,7 +214,7 @@ class RecommendationEngine:
             recommendations.append(Recommendation(
                 title="Snoring and Blood Pressure Risk",
                 description="Snoring together with high blood pressure may increase strain on your heart and blood vessels during sleep. This pattern is often seen in individuals with undiagnosed sleep apnea.",
-                source="American Heart Association (AHA); AASM – OSA and Cardiovascular Risk.",
+                source="American Heart Association (AHA); AASM â€“ OSA and Cardiovascular Risk.",
                 priority=9
             ))
         
@@ -217,7 +223,7 @@ class RecommendationEngine:
             recommendations.append(Recommendation(
                 title="Snoring and Weight-Related Airway Narrowing",
                 description="Snoring combined with a higher BMI increases the likelihood that your upper airway becomes narrowed or collapses during sleep, contributing to louder snoring or breathing pauses.",
-                source="AASM – Obstructive Sleep Apnea Risk Factors; WHO – Obesity and Respiratory Function.",
+                source="AASM â€“ Obstructive Sleep Apnea Risk Factors; WHO â€“ Obesity and Respiratory Function.",
                 priority=9
             ))
         
@@ -226,7 +232,7 @@ class RecommendationEngine:
             recommendations.append(Recommendation(
                 title="Snoring and Excessive Daytime Sleepiness",
                 description="Snoring plus significant daytime sleepiness suggests that your sleep may be fragmented or non-restorative, possibly due to repeated airway obstruction during the night.",
-                source="Epworth Sleepiness Scale (Johns, 1991); AASM – Snoring and Sleep Fragmentation.",
+                source="Epworth Sleepiness Scale (Johns, 1991); AASM â€“ Snoring and Sleep Fragmentation.",
                 priority=10
             ))
         
@@ -235,7 +241,7 @@ class RecommendationEngine:
             recommendations.append(Recommendation(
                 title="Body Habitus and Airway Structure",
                 description="A combination of higher BMI and larger neck circumference is strongly associated with upper airway narrowing, which increases the risk of obstructed breathing during sleep.",
-                source="STOP-Bang Guidelines (Chung F. et al.); WHO – BMI and OSA.",
+                source="STOP-Bang Guidelines (Chung F. et al.); WHO â€“ BMI and OSA.",
                 priority=9
             ))
         
@@ -244,7 +250,7 @@ class RecommendationEngine:
             recommendations.append(Recommendation(
                 title="Sleep Debt and Daytime Sleepiness",
                 description="Short sleep combined with elevated daytime sleepiness suggests that you are accumulating sleep debt and your sleep is not fully restorative.",
-                source="CDC – Sleep Duration and Health; Epworth Sleepiness Scale (Johns, 1991).",
+                source="CDC â€“ Sleep Duration and Health; Epworth Sleepiness Scale (Johns, 1991).",
                 priority=10
             ))
         
@@ -271,12 +277,12 @@ class RecommendationEngine:
             recommendations.append(Recommendation(
                 title="Alcohol's Effect on Snoring",
                 description="Alcohol relaxes the muscles in the throat and can significantly worsen snoring intensity and frequency. Avoiding alcohol close to bedtime may reduce snoring.",
-                source="American Academy of Sleep Medicine (AASM) – Alcohol and Airway Tone.",
+                source="American Academy of Sleep Medicine (AASM) â€“ Alcohol and Airway Tone.",
                 priority=8
             ))
         
         # Low Activity + High ESS
-        if physical_activity_minutes < 30 and ess_score >= 11:
+        if activity_mins < 30 and ess_score >= 11:
             recommendations.append(Recommendation(
                 title="Low Movement and Daytime Sleepiness",
                 description="Low daily physical activity combined with significant daytime sleepiness suggests you may benefit from gradually increasing your activity to support better sleep and alertness.",
@@ -285,11 +291,11 @@ class RecommendationEngine:
             ))
         
         # High BMI + Low Activity
-        if bmi >= 30 and physical_activity_minutes < 30:
+        if bmi >= 30 and activity_mins < 30:
             recommendations.append(Recommendation(
                 title="Weight and Inactivity Effects on Breathing",
                 description="Higher body weight combined with low activity levels can contribute to reduced respiratory function and airway narrowing during sleep. Gradual increases in movement can be beneficial.",
-                source="World Health Organization (WHO); AASM – Weight, Activity, and OSA.",
+                source="World Health Organization (WHO); AASM â€“ Weight, Activity, and OSA.",
                 priority=9
             ))
         
@@ -298,7 +304,7 @@ class RecommendationEngine:
             recommendations.append(Recommendation(
                 title="Adjusting Evening Exercise to Improve Sleep",
                 description="Since you are sleeping less than 7 hours and often exercise in the evening, shifting some workouts earlier in the day may help you wind down more easily at night.",
-                source="Harvard Medical School – Division of Sleep Medicine, Exercise Timing and Sleep.",
+                source="Harvard Medical School â€“ Division of Sleep Medicine, Exercise Timing and Sleep.",
                 priority=7
             ))
         
@@ -320,7 +326,7 @@ class RecommendationEngine:
             recommendations.append(Recommendation(
                 title="Multiple Anatomical and Screening Indicators of OSA",
                 description="Your neck size, weight, and STOP-Bang score together indicate a high probability of obstructive sleep apnea. This pattern is commonly seen in individuals with significant airway narrowing during sleep.",
-                source="Chung F. et al., STOP-Bang Questionnaire Clinical Validation; WHO – Obesity and OSA.",
+                source="Chung F. et al., STOP-Bang Questionnaire Clinical Validation; WHO â€“ Obesity and OSA.",
                 priority=11
             ))
         
@@ -329,7 +335,7 @@ class RecommendationEngine:
             recommendations.append(Recommendation(
                 title="Cardiovascular Strain from Poor Sleep",
                 description="High blood pressure combined with snoring and daytime sleepiness may indicate that your heart and blood vessels are under extra strain during sleep, often seen in people with sleep apnea.",
-                source="American Heart Association (AHA); AASM – OSA and Cardiovascular Outcomes.",
+                source="American Heart Association (AHA); AASM â€“ OSA and Cardiovascular Outcomes.",
                 priority=11
             ))
         
@@ -338,7 +344,7 @@ class RecommendationEngine:
             recommendations.append(Recommendation(
                 title="Sleep Debt and High Apnea Risk",
                 description="Short sleep, significant daytime sleepiness, and a high STOP-Bang score together suggest that your sleep may be both insufficient and disrupted by breathing problems.",
-                source="CDC – Sleep Duration; Epworth Sleepiness Scale; Chung F. et al., STOP-Bang.",
+                source="CDC â€“ Sleep Duration; Epworth Sleepiness Scale; Chung F. et al., STOP-Bang.",
                 priority=11
             ))
         
@@ -347,16 +353,16 @@ class RecommendationEngine:
             recommendations.append(Recommendation(
                 title="Metabolic, Blood Pressure, and Airway Red Flags",
                 description="The combination of diabetes, hypertension, and snoring is frequently observed in individuals with underlying sleep apnea. Addressing sleep quality can be an important part of overall health management.",
-                source="American Heart Association (AHA); American Diabetes Association (ADA); AASM – Sleep and Cardiometabolic Health.",
+                source="American Heart Association (AHA); American Diabetes Association (ADA); AASM â€“ Sleep and Cardiometabolic Health.",
                 priority=11
             ))
         
         # Low Activity + High BMI + Snoring
-        if physical_activity_minutes < 30 and bmi >= 30 and snoring:
+        if activity_mins < 30 and bmi >= 30 and snoring:
             recommendations.append(Recommendation(
                 title="Activity, Weight, and Breathing Difficulties",
                 description="Low daily movement combined with higher BMI and snoring may indicate increased airway resistance and reduced respiratory fitness. Gradual increases in physical activity can help support better breathing and sleep.",
-                source="AASM – OSA and Lifestyle; WHO; CDC Physical Activity Guidelines.",
+                source="AASM â€“ OSA and Lifestyle; WHO; CDC Physical Activity Guidelines.",
                 priority=10
             ))
         
@@ -365,12 +371,12 @@ class RecommendationEngine:
             recommendations.append(Recommendation(
                 title="Strengthening Your Sleep-Wake Cycle",
                 description="You already benefit from morning moderate exercise, but your high daytime sleepiness and short sleep duration suggest your sleep-wake cycle may still be disrupted. Extending sleep time and keeping a consistent schedule can help.",
-                source="Sleep Foundation – Morning Exercise; Epworth Sleepiness Scale; CDC – Sleep Duration.",
+                source="Sleep Foundation â€“ Morning Exercise; Epworth Sleepiness Scale; CDC â€“ Sleep Duration.",
                 priority=9
             ))
         
         # High STOP-BANG + Low Activity + Hypertension
-        if stopbang_score >= 5 and physical_activity_minutes < 30 and hypertension:
+        if stopbang_score >= 5 and activity_mins < 30 and hypertension:
             recommendations.append(Recommendation(
                 title="High-Risk Profile with Low Activity",
                 description="A high STOP-Bang score, low physical activity, and hypertension together indicate an increased cardiometabolic and sleep-related risk profile. Improving activity levels and sleep quality may have meaningful health benefits.",
@@ -401,7 +407,7 @@ class RecommendationEngine:
     @staticmethod
     def _calculate_activity_minutes(daily_steps: int) -> int:
         """Calculate physical activity minutes from daily steps."""
-        # Rough estimate: 100 steps ≈ 1 minute of activity
+        # Rough estimate: 100 steps â‰ˆ 1 minute of activity
         return min(max(daily_steps // 100, 0), 300)
     
     @staticmethod

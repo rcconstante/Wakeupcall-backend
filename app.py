@@ -359,7 +359,7 @@ if scaler is None:
 else:
     print("✅ Scaler loaded successfully!")
 
-def generate_ml_recommendation(osa_probability, risk_level, age, bmi, neck_cm, hypertension, diabetes, smokes, alcohol, ess_score, berlin_score, stopbang_score, sleep_duration=7.0, daily_steps=5000, physical_activity_time=None, snoring=False, sex=1):
+def generate_ml_recommendation(osa_probability, risk_level, age, bmi, neck_cm, hypertension, diabetes, smokes, alcohol, ess_score, berlin_score, stopbang_score, sleep_duration=7.0, daily_steps=5000, physical_activity_time=None, physical_activity_minutes=None, snoring=False, sex=1):
     """Generate personalized recommendations using comprehensive recommendation engine.
     Limits recommendations based on risk level to avoid overwhelming users."""
     
@@ -379,6 +379,7 @@ def generate_ml_recommendation(osa_probability, risk_level, age, bmi, neck_cm, h
         daily_steps=daily_steps,
         risk_level=risk_level,
         physical_activity_time=physical_activity_time,
+        physical_activity_minutes=physical_activity_minutes,
         snoring=snoring
     )
     
@@ -1244,6 +1245,9 @@ def submit_survey():
         observed = stopbang_data.get('observed_apnea', False)
         pressure = stopbang_data.get('hypertension', hypertension == 1)
         
+        print(f"🔍 STOP-BANG from app: snoring={snoring}, tired={tired}, observed={observed}, pressure={pressure}")
+        print(f"🔍 Full stopbang_data received: {stopbang_data}")
+        
         stopbang_score, stopbang_category = calculate_stopbang_score(
             snoring, tired, observed, pressure,
             age, neck_cm, bmi, sex == 1
@@ -1257,10 +1261,12 @@ def submit_survey():
         tired_after_sleep = surveys.get('tired_after_sleep', 'Unknown')  # Post-sleep tiredness
         feels_sleepy_daytime = 1 if surveys.get('feels_sleepy_daytime', tired) else 0
         nodded_off_driving = 1 if surveys.get('nodded_off_driving', False) else 0
-        physical_activity_time = surveys.get('physical_activity_time', 'Unknown')  # When they exercise
+        physical_activity_time = surveys.get('physical_activity_time', 'Unknown')  # When they exercise (Morning, Afternoon, Evening)
         physical_activity_type = surveys.get('physical_activity_type', 'Unknown')  # What activity (Swimming, Cycling, etc)
+        physical_activity_minutes = surveys.get('physical_activity_minutes', None)  # Daily activity minutes from user input
         print(f"📊 Survey received physical_activity_time: '{physical_activity_time}'")
         print(f"📊 Survey received physical_activity_type: '{physical_activity_type}'")
+        print(f"📊 Survey received physical_activity_minutes: {physical_activity_minutes}")
         print(f"📊 All survey_responses keys: {list(surveys.keys())}")
         
         # Extract Google Fit data
@@ -1416,7 +1422,8 @@ def submit_survey():
                     osa_probability, risk_level, age, bmi, neck_cm, 
                     hypertension, diabetes, smokes, alcohol, 
                     ess_score, berlin_score_binary, stopbang_score,
-                    sleep_duration, daily_steps, physical_activity_time, snoring
+                    sleep_duration, daily_steps, physical_activity_time, 
+                    physical_activity_minutes, snoring
                 )
             except Exception as e:
                 print(f"❌ Prediction error: {e}")
@@ -1527,6 +1534,7 @@ def submit_survey():
                       1 if snoring else 0, 1 if tired else 0, 1 if observed else 0, 1 if pressure else 0,
                       user_id))
                 
+                print(f"📊 Saving to DB: stopbang_snoring={1 if snoring else 0} (snoring={snoring})")
                 rows_affected = cursor.rowcount
                 print(f"✅ Updated existing survey (ID: {survey_id}, rows affected: {rows_affected}) for user {user_id}")
                 
@@ -2289,10 +2297,12 @@ def generate_pdf_report():
             snoring = data.get('stopbang_snoring', False)
             tiredness = data.get('stopbang_tired', False) 
             observed_apnea = data.get('stopbang_observed_apnea', False)
+            print(f"📊 PDF Guest mode - snoring from request data: {snoring}")
         else:
             snoring = stopbang_snoring
             tiredness = stopbang_tired
             observed_apnea = stopbang_observed_apnea
+            print(f"📊 PDF Registered user - snoring from DB (survey[28]): {snoring}")
         
         # Generate charts for PDF
         def generate_shap_chart():
