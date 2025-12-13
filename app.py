@@ -1266,7 +1266,7 @@ def submit_survey():
         physical_activity_minutes = surveys.get('physical_activity_minutes', None)  # Daily activity minutes from user input
         print(f"📊 Survey received physical_activity_time: '{physical_activity_time}'")
         print(f"📊 Survey received physical_activity_type: '{physical_activity_type}'")
-        print(f"📊 Survey received physical_activity_minutes: {physical_activity_minutes}")
+        print(f"📊 Survey received physical_activity_minutes: {physical_activity_minutes} (type: {type(physical_activity_minutes).__name__})")
         print(f"📊 All survey_responses keys: {list(surveys.keys())}")
         
         # Extract Google Fit data

@@ -51,14 +51,23 @@ class RecommendationEngine:
         recommendations = []
         
         # Use physical_activity_minutes if provided (user's direct input), otherwise calculate from steps
+        # Handle both int and string inputs
         if physical_activity_minutes is not None:
-            # Use the actual minutes entered by user
-            activity_mins = physical_activity_minutes
-            print(f"📊 Using user-provided physical activity minutes: {activity_mins}")
+            # Convert to int if it's a string
+            if isinstance(physical_activity_minutes, str):
+                try:
+                    activity_mins = int(physical_activity_minutes)
+                    print(f"📊 Converted string physical activity minutes to int: {activity_mins}")
+                except ValueError:
+                    activity_mins = RecommendationEngine._calculate_activity_minutes(daily_steps)
+                    print(f"📊 Failed to parse physical_activity_minutes '{physical_activity_minutes}', using steps: {activity_mins}")
+            else:
+                activity_mins = int(physical_activity_minutes)
+                print(f"📊 Using user-provided physical activity minutes: {activity_mins}")
         else:
             # Fallback: calculate from daily steps
             activity_mins = RecommendationEngine._calculate_activity_minutes(daily_steps)
-            print(f"📊 Calculated physical activity minutes from steps ({daily_steps}): {activity_mins}")
+            print(f"📊 physical_activity_minutes is None, calculated from steps ({daily_steps}): {activity_mins}")
         
         activity_type = RecommendationEngine._determine_activity_type(activity_mins)
         activity_time = "morning"  # Default
