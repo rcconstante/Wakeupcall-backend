@@ -290,12 +290,23 @@ class WakeUpCallPDFGenerator:
             1 if stop_bang.get('gender_male') else 0
         ])
         
-        if actual_score >= 5:
+        # Use the model's risk level from assessment (more accurate than STOP-BANG alone)
+        assessment_risk = data.get('assessment', {}).get('risk_level', 'Unknown')
+        # Extract the main risk word (High/Intermediate/Low) from the full risk level string
+        if 'High' in assessment_risk or 'HIGH' in assessment_risk:
             risk_text = "High Risk"
-        elif actual_score >= 3:
+        elif 'Intermediate' in assessment_risk or 'INTERMEDIATE' in assessment_risk:
             risk_text = "Intermediate Risk"
-        else:
+        elif 'Low' in assessment_risk or 'LOW' in assessment_risk:
             risk_text = "Low Risk"
+        else:
+            # Fallback to calculated risk if model risk not available
+            if actual_score >= 5:
+                risk_text = "High Risk"
+            elif actual_score >= 3:
+                risk_text = "Intermediate Risk"
+            else:
+                risk_text = "Low Risk"
         
         stop_bang_data = [
             ['Snoring', 'Yes' if stop_bang.get('snoring') else 'No'],
