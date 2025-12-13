@@ -2215,7 +2215,7 @@ def generate_pdf_report():
                            ess_sitting_reading, ess_watching_tv, ess_public_sitting, ess_passenger_car,
                            ess_lying_down_afternoon, ess_talking, ess_after_lunch, ess_traffic_stop,
                            stopbang_snoring, stopbang_tired, stopbang_observed_apnea, stopbang_pressure,
-                           physical_activity_time, physical_activity_type
+                           physical_activity_time, physical_activity_type, physical_activity_minutes
                     FROM user_surveys
                     WHERE user_id = ?
                     ORDER BY completed_at DESC
@@ -2286,10 +2286,11 @@ def generate_pdf_report():
                 stopbang_observed_apnea = False
                 stopbang_pressure = bool(hypertension)
             
-            # Physical activity time and type (use default if not available)
+            # Physical activity time, type, and minutes (use default if not available)
             physical_activity_time = survey[32] if has_extended_columns and len(survey) > 32 and survey[32] is not None else 'Unknown'
             physical_activity_type = survey[33] if has_extended_columns and len(survey) > 33 and survey[33] is not None else 'Unknown'
-            print(f"📊 Retrieved from DB - physical_activity_time: '{physical_activity_time}', physical_activity_type: '{physical_activity_type}'")
+            physical_activity_minutes = survey[34] if has_extended_columns and len(survey) > 34 and survey[34] is not None else None
+            print(f"📊 Retrieved from DB - physical_activity_time: '{physical_activity_time}', physical_activity_type: '{physical_activity_type}', physical_activity_minutes: {physical_activity_minutes}")
         
         # Initialize ESS variables with defaults if not already set (for non-authenticated users)
         if 'ess_sitting_reading' not in locals():
