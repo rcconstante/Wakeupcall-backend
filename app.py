@@ -1197,6 +1197,7 @@ def submit_survey():
         print(f"🔍 DEBUG - survey_responses keys: {list(survey_debug.keys())}")
         print(f"🔍 DEBUG - physical_activity_time value: '{survey_debug.get('physical_activity_time')}'")
         print(f"🔍 DEBUG - physical_activity_type value: '{survey_debug.get('physical_activity_type')}'")
+        print(f"🔍 DEBUG - physical_activity_minutes RAW from JSON: {survey_debug.get('physical_activity_minutes')} (type: {type(survey_debug.get('physical_activity_minutes')).__name__})")
         
         # Extract demographics
         demo = data.get('demographics', {})
